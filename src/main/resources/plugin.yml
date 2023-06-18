@@ -1,0 +1,13 @@
+name: playerPenalty
+version: '${project.version}'
+main: akc.plugin.playerpenalty.PlayerPenalty
+api-version: 1.19
+depend: [PlayerPoints, DiscordSRV]
+commands:
+  issue:
+    description: "some description"
+  pardon:
+    description: "some description"
+  pay:
+    description: "some description"
+    command: /playerPenalty payFine
