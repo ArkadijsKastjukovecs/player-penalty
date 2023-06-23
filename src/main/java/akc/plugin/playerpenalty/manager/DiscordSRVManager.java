@@ -5,6 +5,7 @@ import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
+import org.bukkit.entity.Player;
 
 public class DiscordSRVManager {
 
@@ -55,6 +56,10 @@ public class DiscordSRVManager {
                 }
             }).start();
         }
+    }
+
+    public String getDiscordId(Player player) {
+        return accountLinkManager.getDiscordId(player.getUniqueId());
     }
 
     public void sendMEssageToDiscord(Ticket ticket) {
