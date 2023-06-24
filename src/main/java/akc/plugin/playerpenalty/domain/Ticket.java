@@ -10,12 +10,13 @@ public class Ticket {
     private final Player targetPlayer;
     private final Player policePlayer;
     private final String targetPlayerDiscordId;
-    private final String ticketNumber;
     private final int penaltyAmount;
     private final Player victim;
     private final String reason;
     private final LocalDateTime deadline;
 
+    private boolean paid;
+    private String ticketNumber;
 
     public Builder copyBuilder() {
         return builder()
@@ -40,6 +41,7 @@ public class Ticket {
         this.targetPlayer = b.targetPlayer;
         this.policePlayer = b.policePlayer;
         this.deadline = b.deadline;
+        this.paid = b.paid;
     }
 
     public TicketType getTicketType() {
@@ -52,6 +54,11 @@ public class Ticket {
 
     public String getTargetPlayerDiscordId() {
         return targetPlayerDiscordId;
+    }
+
+    public Ticket setTicketNumber(String ticketNumber) {
+        this.ticketNumber = ticketNumber;
+        return this;
     }
 
     public String getTicketNumber() {
@@ -78,6 +85,14 @@ public class Ticket {
         return policePlayer;
     }
 
+    public void markAsPaid() {
+        this.paid = true;
+    }
+
+    public boolean isPaid() {
+        return paid;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -92,6 +107,7 @@ public class Ticket {
         private Player victim;
         private String reason;
         private LocalDateTime deadline;
+        private boolean paid = false;
 
         private Builder() {
         }
@@ -138,6 +154,11 @@ public class Ticket {
 
         public Builder deadline(LocalDateTime deadline) {
             this.deadline = deadline;
+            return this;
+        }
+
+        public Builder paid(boolean paid) {
+            this.paid = paid;
             return this;
         }
 

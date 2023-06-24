@@ -27,6 +27,13 @@ public class DiscordMessageSender {
                         
             Немедленны выплатите его в банке или пострадавшему, иначе со временем он удвоится!
             """;
+    private static final String PAY_FINE_FIELD_NAME_TEMPLATE = """
+            :people_hugging: Штраф %s игрока %s был прощен игроком %s!
+            """;
+    private static final String PAY_FINE_FIELD_VALUE_TEMPLATE = """
+                        
+            В следующий раз больше не нарушайте!
+            """;
 
     private final DateTimeFormatter dateTimeFormatter;
     private final TextChannel channelToSend;
@@ -42,9 +49,15 @@ public class DiscordMessageSender {
 
         switch (ticket.getTicketType()) {
             case ISSUE -> sendIssueTicket(ticket);
+            case PARDON -> sendPardonTicket(ticket);
             default -> {
             }
         }
+    }
+
+    private void sendPardonTicket(Ticket ticket) {
+        channelToSend.sendMessage("<@%s>".formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
+                message.editMessageEmbeds(List.of(createPayFineEmbed(ticket, message))).queue());
     }
 
     private void sendIssueTicket(Ticket ticket) {
@@ -54,12 +67,25 @@ public class DiscordMessageSender {
 
     private MessageEmbed createIssueEmbed(Ticket ticket, Message message) {
         final var formattedDate = ticket.getDeadline().atOffset(ZoneOffset.UTC).format(dateTimeFormatter);
+        ticket.setTicketNumber(message.getId());
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
 //                .setThumbnail(null) // TODO
                 .addField(
                         ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getName(), message.getId(), ticket.getPenaltyAmount()),
                         ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), formattedDate),
+                        false)
+                .build();
+    }
+
+    private MessageEmbed createPayFineEmbed(Ticket ticket, Message message) {
+        ticket.setTicketNumber(message.getId());
+        return new EmbedBuilder()
+                .setColor(ticket.getTicketType().getTicketColor())
+//                .setThumbnail(null) // TODO
+                .addField(
+                        PAY_FINE_FIELD_NAME_TEMPLATE.formatted(ticket.getTicketNumber(), ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
+                        PAY_FINE_FIELD_VALUE_TEMPLATE,
                         false)
                 .build();
     }

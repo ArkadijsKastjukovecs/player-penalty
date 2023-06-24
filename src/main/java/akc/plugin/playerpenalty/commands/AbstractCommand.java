@@ -1,5 +1,9 @@
 package akc.plugin.playerpenalty.commands;
 
+import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
+import akc.plugin.playerpenalty.config.ConfigurationFields;
+import akc.plugin.playerpenalty.domain.Ticket;
+import akc.plugin.playerpenalty.manager.TicketManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -8,21 +12,30 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCommand implements TabExecutor {
 
-    private static final List<String> DURATION_SUGGESTIONS = List.of("1d", "10m", "5h30m");
+    private static final List<String> DURATION_SUGGESTIONS = List.of("1d", "10m", "5h30m", "40s", "2w");
     protected final List<SubCommand> subCommands;
+    protected final PlayerPenaltyPlugin plugin;
+    protected final TicketManager ticketManager;
 
+    private final String currentZone;
     private final String commandName;
 
-    protected AbstractCommand(List<SubCommand> subCommands, String commandName) {
+    protected AbstractCommand(List<SubCommand> subCommands, PlayerPenaltyPlugin plugin, String commandName) {
         this.subCommands = subCommands;
+        this.plugin = plugin;
         this.commandName = commandName;
+        this.currentZone = plugin.getConfigManager().getConfigValue(ConfigurationFields.CURRENT_ZONE_ID);
+        this.ticketManager = plugin.getTicketManager();
     }
 
     public String getCommandName() {
@@ -31,10 +44,10 @@ public abstract class AbstractCommand implements TabExecutor {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        return getSuggestions(subCommands, 0, args);
+        return getSuggestions(subCommands, 0, args, sender);
     }
 
-    private List<String> getSuggestions(List<SubCommand> subCommands, int depth, String[] args) {
+    private List<String> getSuggestions(List<SubCommand> subCommands, int depth, String[] args, @NotNull CommandSender sender) {
         String[] combineStringArgs = combineStringArgs(args);
         if (depth == combineStringArgs.length - 1) {
 
@@ -54,6 +67,16 @@ public abstract class AbstractCommand implements TabExecutor {
             if (anyCommandAllowsDuration) {
                 commandsSuggestions.addAll(DURATION_SUGGESTIONS);
             }
+
+            final var anyCommandAllowsTicketNumber = subCommands.stream().anyMatch(it -> it.getArgumentType().equals(ArgumentType.TICKET_NUMBER));
+            if (anyCommandAllowsTicketNumber && sender instanceof Player player) {
+                final var notPaidIssues = ticketManager.findOpenIssues(player).stream()
+                        .map(Ticket::getTicketNumber)
+                        .collect(Collectors.toList());
+
+                commandsSuggestions.addAll(notPaidIssues);
+            }
+
             return commandsSuggestions;
         }
         int finalDepth = depth;
@@ -62,7 +85,7 @@ public abstract class AbstractCommand implements TabExecutor {
                 .findFirst();
         if (subCommandOpt.isPresent()) {
             final var subCommand = subCommandOpt.get();
-            return getSuggestions(subCommand.getSubCommands(), ++depth, combineStringArgs);
+            return getSuggestions(subCommand.getSubCommands(), ++depth, combineStringArgs, sender);
         }
         return Collections.emptyList();
     }
@@ -107,4 +130,34 @@ public abstract class AbstractCommand implements TabExecutor {
         }
         return true;
     }
+
+    protected LocalDateTime getTimeFromDuration(String duration) {
+        var currentTime = LocalDateTime.now(ZoneId.of(currentZone));
+
+        for (String adjustment : duration.split("(?<=[wmsdh])(?=\\d)")) {
+            final var adjustmentFunc = toLocalDateAdjustment.apply(adjustment);
+            currentTime = adjustmentFunc.apply(currentTime);
+        }
+
+        return currentTime;
+    }
+
+    private Function<String, Function<LocalDateTime, LocalDateTime>> toLocalDateAdjustment = arg -> {
+        if (arg.contains("w")) {
+            return localDateTime -> localDateTime.plusWeeks(Long.parseLong(arg.substring(0, arg.length() - 1)));
+        }
+        if (arg.contains("s")) {
+            return localDateTime -> localDateTime.plusSeconds(Long.parseLong(arg.substring(0, arg.length() - 1)));
+        }
+        if (arg.contains("m")) {
+            return localDateTime -> localDateTime.plusMinutes(Long.parseLong(arg.substring(0, arg.length() - 1)));
+        }
+        if (arg.contains("d")) {
+            return localDateTime -> localDateTime.plusDays(Long.parseLong(arg.substring(0, arg.length() - 1)));
+        }
+        if (arg.contains("h")) {
+            return localDateTime -> localDateTime.plusHours(Long.parseLong(arg.substring(0, arg.length() - 1)));
+        }
+        return Function.identity();
+    };
 }

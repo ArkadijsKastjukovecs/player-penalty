@@ -18,4 +18,8 @@ public class PlayerPointsManager {
         final var playerPoints = JavaPlugin.getPlugin(PlayerPoints.class);
         this.pointsAPI = new PlayerPointsAPI(playerPoints);
     }
+
+    public PlayerPointsAPI getPointsAPI() {
+        return pointsAPI;
+    }
 }

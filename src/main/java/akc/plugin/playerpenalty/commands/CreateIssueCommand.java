@@ -1,32 +1,27 @@
 package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.config.ConfigurationFields;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
+import akc.plugin.playerpenalty.manager.DiscordSRVManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class CreateIssueCommand extends AbstractCommand {
 
-    public final String currentZone;
-    private final PlayerPenaltyPlugin plugin;
     private final int minRequiredLenght;
+    private final DiscordSRVManager discordSRVManager;
 
     public CreateIssueCommand(PlayerPenaltyPlugin plugin) {
-        super(List.of(createSubCommand()), "createIssue");
-        this.plugin = plugin;
+        super(List.of(createSubCommand()), plugin, "createIssue");
         this.minRequiredLenght = 5;
-        this.currentZone = plugin.getConfigManager().getConfigValue(ConfigurationFields.CURRENT_ZONE_ID);
+        this.discordSRVManager = plugin.getDiscordSRVManager();
     }
 
     @Override
@@ -45,7 +40,6 @@ public class CreateIssueCommand extends AbstractCommand {
                 sender.sendMessage("не удалось распознать параметр %s".formatted(invalidArgument));
                 return true;
             }
-            final var discordSRVManager = plugin.getDiscordSRVManager();
             final var targetPlayer = getPlayerOrOfflinePlayer(combineStringArgs[0]);
             final var targetPlayerDiscordId = discordSRVManager.getDiscordId(targetPlayer);
             final var ticket = Ticket.builder()
@@ -60,6 +54,7 @@ public class CreateIssueCommand extends AbstractCommand {
                     .build();
 
             discordSRVManager.sendMEssageToDiscord(ticket);
+            ticketManager.addTicketToPlayer(targetPlayer, ticket);
             police.sendMessage("Штраф успешно выписан");
 
         } else {
@@ -68,37 +63,6 @@ public class CreateIssueCommand extends AbstractCommand {
         }
         return true;
     }
-
-    private LocalDateTime getTimeFromDuration(String duration) {
-        var currentTime = LocalDateTime.now(ZoneId.of(currentZone));
-
-        for (String adjustment : duration.split("(?<=[wmsdh])(?=\\d)")) {
-            final var adjustmentFunc = toLocalDateAdjustment.apply(adjustment);
-            currentTime = adjustmentFunc.apply(currentTime);
-        }
-
-        return currentTime;
-    }
-
-    private Function<String, Function<LocalDateTime, LocalDateTime>> toLocalDateAdjustment = arg -> {
-        System.out.println("LocalDate adjustment: " + arg);
-        if (arg.contains("w")) {
-            return localDateTime -> localDateTime.plusWeeks(Long.parseLong(arg.substring(0, arg.length() - 1)));
-        }
-        if (arg.contains("s")) {
-            return localDateTime -> localDateTime.plusSeconds(Long.parseLong(arg.substring(0, arg.length() - 1)));
-        }
-        if (arg.contains("m")) {
-            return localDateTime -> localDateTime.plusMinutes(Long.parseLong(arg.substring(0, arg.length() - 1)));
-        }
-        if (arg.contains("d")) {
-            return localDateTime -> localDateTime.plusDays(Long.parseLong(arg.substring(0, arg.length() - 1)));
-        }
-        if (arg.contains("h")) {
-            return localDateTime -> localDateTime.plusHours(Long.parseLong(arg.substring(0, arg.length() - 1)));
-        }
-        return Function.identity();
-    };
 
     private String validateArgs(String[] args) {
         // TODO

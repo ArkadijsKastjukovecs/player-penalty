@@ -4,10 +4,15 @@ import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.config.ConfigurationFields;
 import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.DiscordSRV;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.ISnowflake;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DiscordSRVManager {
 
@@ -60,6 +65,19 @@ public class DiscordSRVManager {
                     }
                 }
             });
+    }
+
+    public List<String> getTickets(Player player) {
+        final var discordId = getDiscordId(player);
+        return getPenaltiesChannel().getIterableHistory().stream()
+                .filter(message -> message.getMentionedUsers().stream()
+                        .anyMatch(user -> user.getId().equals(discordId)))
+                .map(ISnowflake::getId)
+                .collect(Collectors.toList());
+    }
+
+    public Message getMessage(String messageId) {
+        return getPenaltiesChannel().getHistory().getMessageById(messageId);
     }
 
     public String getDiscordId(Player player) {
