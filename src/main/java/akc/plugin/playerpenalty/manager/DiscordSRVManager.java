@@ -1,6 +1,7 @@
 package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
+import akc.plugin.playerpenalty.config.ConfigurationFields;
 import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
@@ -11,6 +12,7 @@ import org.bukkit.entity.Player;
 public class DiscordSRVManager {
 
     private final PlayerPenaltyPlugin plugin;
+    private final String channelToSendMessages;
     private AccountLinkManager accountLinkManager;
     private DiscordSRV discordSRV;
     private TextChannel penaltiesChannel;
@@ -18,18 +20,18 @@ public class DiscordSRVManager {
 
     public DiscordSRVManager(PlayerPenaltyPlugin playerPenaltyPlugin) {
         this.plugin = playerPenaltyPlugin;
+        this.channelToSendMessages = plugin.getConfigManager().getConfigValue(ConfigurationFields.DISCORD_CHANNEL_NAME);
     }
 
     public void initDiscordSrv() {
-        if (plugin.getServer().getPluginManager().isPluginEnabled("PlayerPoints")) {
             discordSRV = DiscordSRV.getPlugin();
             System.out.println("DISCORDSRV: " + discordSRV);
 
             Bukkit.getScheduler().runTask(plugin, () -> {
-                for (int i = 5; i > 0; i--) {
-                    accountLinkManager = discordSRV.getAccountLinkManager();
-                    System.out.println("Getting accountLinkManager: " + accountLinkManager);
+                for (int i = 5; i >= 0; i--) {
+                    this.accountLinkManager = discordSRV.getAccountLinkManager();
                     if (accountLinkManager != null) {
+                        System.out.println("Account link manager successfully obtained");
                         break;
                     }
                     try {
@@ -41,13 +43,14 @@ public class DiscordSRVManager {
             });
 
             Bukkit.getScheduler().runTask(plugin, () -> {
-                for (int i = 5; i > 0; i--) {
-                    penaltiesChannel = discordSRV.getJda().getTextChannelsByName("penalties", false)
+                for (int i = 5; i >= 0; i--) {
+                    this.penaltiesChannel = discordSRV.getJda().getTextChannelsByName(channelToSendMessages, false)
                             .stream()
                             .findAny().orElse(null);
-                    System.out.println("Getting penalties channel: " + penaltiesChannel);
+                    System.out.println("Channel to send messages is not obtained");
                     if (penaltiesChannel != null) {
-                        discordMessageSender = new DiscordMessageSender(penaltiesChannel);
+                        System.out.println("Channel to send messages successfully obtained");
+                        discordMessageSender = new DiscordMessageSender(plugin, getPenaltiesChannel());
                         break;
                     }
                     try {
@@ -57,7 +60,6 @@ public class DiscordSRVManager {
                     }
                 }
             });
-        }
     }
 
     public String getDiscordId(Player player) {

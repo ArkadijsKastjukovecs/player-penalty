@@ -1,5 +1,7 @@
 package akc.plugin.playerpenalty.manager;
 
+import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
+import akc.plugin.playerpenalty.config.ConfigurationFields;
 import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
@@ -25,11 +27,14 @@ public class DiscordMessageSender {
                         
             Немедленны выплатите его в банке или пострадавшему, иначе со временем он удвоится!
             """;
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy", new Locale("ru"));
 
+    private final DateTimeFormatter dateTimeFormatter;
     private final TextChannel channelToSend;
 
-    public DiscordMessageSender(TextChannel channelToSend) {
+    public DiscordMessageSender(PlayerPenaltyPlugin plugin, TextChannel channelToSend) {
+        String timeDisplayFormat = plugin.getConfigManager().getConfigValue(ConfigurationFields.TIME_DISPLAY_FORMAT);
+        String locale = plugin.getConfigManager().getConfigValue(ConfigurationFields.LOCALE);
+        this.dateTimeFormatter = DateTimeFormatter.ofPattern(timeDisplayFormat, new Locale(locale));
         this.channelToSend = channelToSend;
     }
 

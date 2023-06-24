@@ -1,46 +1,48 @@
 package akc.plugin.playerpenalty;
 
 import akc.plugin.playerpenalty.commands.AbstractCommand;
-import akc.plugin.playerpenalty.commands.BroadcastCommand;
 import akc.plugin.playerpenalty.commands.CreateIssueCommand;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
 import akc.plugin.playerpenalty.manager.DiscordSRVManager;
-import org.black_ixx.playerpoints.PlayerPoints;
-import org.black_ixx.playerpoints.PlayerPointsAPI;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import akc.plugin.playerpenalty.manager.MainConfigManager;
+import akc.plugin.playerpenalty.manager.PlayerPointsManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public final class PlayerPenaltyPlugin extends JavaPlugin {
 
-    private final List<AbstractCommand> supportedCommands = List.of(
-            new CreateIssueCommand(this),
-            new BroadcastCommand()
-    );
+    private List<AbstractCommand> supportedCommands;
 
     private DiscordSRVManager discordSRVManager;
-    private PlayerPointsAPI playerPointsAPI;
-//    private JDA bot;
-//    private TextChannel penaltiesChannel;
-
+    private MainConfigManager mainConfigManager;
+    private PlayerPointsManager playerPointsManager;
 
     @Override
     public void onEnable() {
-        final var commandHandler = new CommandHandler(this);
-        discordSRVManager = new DiscordSRVManager(this);
-        // Plugin startup logic
-        if (getServer().getPluginManager().isPluginEnabled("PlayerPoints")) {
-            PlayerPoints playerPoints = getPlugin(PlayerPoints.class);
-            PlayerPointsAPI playerPointsAPI = new PlayerPointsAPI(playerPoints);
-            this.playerPointsAPI = playerPointsAPI;
-//            initDiscord();
-        }
+        // configuration
+        mainConfigManager = new MainConfigManager(this);
 
+        mainConfigManager.populateDefaultValues();
+        mainConfigManager.save();
+
+        // handlers
+        final var commandHandler = new CommandHandler(this);
+
+        // external plugins
+        discordSRVManager = new DiscordSRVManager(this);
         discordSRVManager.initDiscordSrv();
+
+        playerPointsManager = new PlayerPointsManager(this);
+        playerPointsManager.initPlayerPointsPlugin();
+
+        // commands
+        this.supportedCommands = populateCommands();
         commandHandler.registerCommands();
+    }
+
+    public MainConfigManager getConfigManager() {
+        return mainConfigManager;
     }
 
 //    private void initDiscord() {
@@ -59,13 +61,6 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
 //    }
 
 
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
-        System.out.println("SHUTTING DOWN DISCORD BOT");
-//        bot.shutdown();
-    }
-
     public List<AbstractCommand> getSupportedCommands() {
         return supportedCommands;
     }
@@ -74,52 +69,10 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         return discordSRVManager;
     }
 
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-
-//        if (command.getName().equals("issue")) {
-//            Player targetPlayer = getServer().getPlayer(args[0]);
-//            playerPointsAPI.take(targetPlayer.getUniqueId(), Integer.valueOf(args[1]));
-//
-//            String discordId = accountLinkManager.getDiscordId(targetPlayer.getUniqueId());
-//
-//            github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel anotherChannel = discordSRV.getJda().getTextChannelsByName("penalties", false)
-//                    .stream()
-//                    .findAny().orElse(null);
-//
-//            String messageText = MessageFormat.format("`{0}` выписал штраф игроку: <@{1}>, на сумму: {2}, номер счета: {3}, статус: НЕ ОПЛАЧЕНО", sender.getName(), discordId, args[1], "PLACEHOLDER");
-//            System.out.println(messageText);
-//            penaltiesChannel.sendMessage(messageText).queue(message -> {
-//                message.editMessage(MessageFormat.format("`{0}` выписал штраф игроку: <@{1}>, на сумму: {2}, номер счета: {3}, статус: НЕ ОПЛАЧЕНО", sender.getName(), discordId, args[1], message.getId())).queue();
-//                anotherChannel.sendMessage(MessageFormat.format("`{0}` выписал штраф игроку: <@{1}>, на сумму: {2}, номер счета: {3}, статус: НЕ ОПЛАЧЕНО", sender.getName(), discordId, args[1], message.getId())).queue();
-//            });
-//
-//            return true;
-//        }
-//
-//        if (command.getName().equals("pardon")) {
-//            penaltiesChannel.retrieveMessageById(args[0]).queue(message -> {
-//                message.editMessage(message.getContentRaw().replace("НЕ ОПЛАЧЕНО", "ОПРАВДАНО")).queue();
-//            });
-//            return true;
-//        }
-//
-//        if (command.getName().equals("pay")) {
-//
-//            penaltiesChannel.retrieveMessageById(args[0]).queue(message -> {
-//                Player targetPlayer = getServer().getPlayer("_Mortem_");
-//                boolean take = playerPointsAPI.take(targetPlayer.getUniqueId(), 100);
-//                if (take) {
-//                    targetPlayer.sendMessage(MessageFormat.format("Штраф под номером: {0} погашен", args[0]));
-//                    message.editMessage(message.getContentRaw().replace("НЕ ОПЛАЧЕНО", "ОПЛАЧЕНО")).queue();
-//                } else {
-//                    targetPlayer.sendMessage(MessageFormat.format("Штраф под номером: {0} не оплачен, возможно не достаточно очков", args[0]));
-//                }
-//            });
-//            return true;
-//        }
-//
-//        return true;
-        return true;
+    private List<AbstractCommand> populateCommands() {
+        return List.of(
+                new CreateIssueCommand(this)
+        );
     }
+
 }

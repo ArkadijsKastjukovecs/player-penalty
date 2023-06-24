@@ -1,6 +1,7 @@
 package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
+import akc.plugin.playerpenalty.config.ConfigurationFields;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
 import org.bukkit.Bukkit;
@@ -17,6 +18,7 @@ import java.util.function.Function;
 
 public class CreateIssueCommand extends AbstractCommand {
 
+    public final String currentZone;
     private final PlayerPenaltyPlugin plugin;
     private final int minRequiredLenght;
 
@@ -24,6 +26,7 @@ public class CreateIssueCommand extends AbstractCommand {
         super(List.of(createSubCommand()), "createIssue");
         this.plugin = plugin;
         this.minRequiredLenght = 5;
+        this.currentZone = plugin.getConfigManager().getConfigValue(ConfigurationFields.CURRENT_ZONE_ID);
     }
 
     @Override
@@ -67,7 +70,7 @@ public class CreateIssueCommand extends AbstractCommand {
     }
 
     private LocalDateTime getTimeFromDuration(String duration) {
-        var currentTime = LocalDateTime.now(ZoneId.of("Europe/Riga"));
+        var currentTime = LocalDateTime.now(ZoneId.of(currentZone));
 
         for (String adjustment : duration.split("(?<=[wmsdh])(?=\\d)")) {
             final var adjustmentFunc = toLocalDateAdjustment.apply(adjustment);
