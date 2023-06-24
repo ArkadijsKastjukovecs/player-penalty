@@ -2,6 +2,7 @@ package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.domain.Ticket;
+import akc.plugin.playerpenalty.domain.TicketType;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -9,7 +10,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -28,26 +29,35 @@ public class CreateIssueCommand extends AbstractCommand {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
+        String[] combineStringArgs = combineStringArgs(args);
+
         if (sender instanceof Player police) {
-            if (args.length < minRequiredLenght) {
+            if (combineStringArgs.length < minRequiredLenght) {
                 sender.sendMessage("Все параметры должны быть указаны");
                 return true;
             }
 
-            final var invalidArgument = validateArgs(args);
+            final var invalidArgument = validateArgs(combineStringArgs);
             if (invalidArgument != null) {
                 sender.sendMessage("не удалось распознать параметр %s".formatted(invalidArgument));
                 return true;
             }
-
-            final var build = Ticket.builder()
+            final var discordSRVManager = plugin.getDiscordSRVManager();
+            final var targetPlayer = getPlayerOrOfflinePlayer(combineStringArgs[0]);
+            final var targetPlayerDiscordId = discordSRVManager.getDiscordId(targetPlayer);
+            final var ticket = Ticket.builder()
                     .policePlayer(police)
-                    .targetPlayer(getPlayerOrOfflinePlayer(args[0]))
-                    .victim(getPlayerOrOfflinePlayer(args[1]))
-                    .penaltyAmount(Integer.valueOf(args[2]))
-                    .reason(args[3])
-                    .deadline()
+                    .targetPlayer(targetPlayer)
+                    .victim(getPlayerOrOfflinePlayer(combineStringArgs[1]))
+                    .penaltyAmount(Integer.parseInt(combineStringArgs[2]))
+                    .reason(combineStringArgs[4])
+                    .deadline(getTimeFromDuration(combineStringArgs[3]))
+                    .ticketType(TicketType.ISSUE)
+                    .targetPlayerDiscordId(targetPlayerDiscordId)
                     .build();
+
+            discordSRVManager.sendMEssageToDiscord(ticket);
+            police.sendMessage("Штраф успешно выписан");
 
         } else {
             sender.sendMessage("Только игроки могут отправлять эту комманду");
@@ -57,15 +67,18 @@ public class CreateIssueCommand extends AbstractCommand {
     }
 
     private LocalDateTime getTimeFromDuration(String duration) {
-        final var currentTime = LocalDateTime.now();
-        Arrays.stream(duration.split("[wsmdh]]"))
-                .map(toLocalDateAdjustment)
-//                .reduce(LocalDateTime.now(), ((localDateTime, localDateTimeLocalDateTimeFunction) -> localDateTime.e(localDateTimeLocalDateTimeFunction)) )
-//                .map(func -> func.apply(currentTime));
-//        currentTime.pl
+        var currentTime = LocalDateTime.now(ZoneId.of("Europe/Riga"));
+
+        for (String adjustment : duration.split("(?<=[wmsdh])(?=\\d)")) {
+            final var adjustmentFunc = toLocalDateAdjustment.apply(adjustment);
+            currentTime = adjustmentFunc.apply(currentTime);
+        }
+
+        return currentTime;
     }
 
     private Function<String, Function<LocalDateTime, LocalDateTime>> toLocalDateAdjustment = arg -> {
+        System.out.println("LocalDate adjustment: " + arg);
         if (arg.contains("w")) {
             return localDateTime -> localDateTime.plusWeeks(Long.parseLong(arg.substring(0, arg.length() - 1)));
         }
@@ -81,7 +94,8 @@ public class CreateIssueCommand extends AbstractCommand {
         if (arg.contains("h")) {
             return localDateTime -> localDateTime.plusHours(Long.parseLong(arg.substring(0, arg.length() - 1)));
         }
-    }
+        return Function.identity();
+    };
 
     private String validateArgs(String[] args) {
         // TODO
@@ -107,13 +121,13 @@ public class CreateIssueCommand extends AbstractCommand {
                                 .argumentType(ArgumentType.SOME_VALUE)
                                 .required(true)
                                 .subCommands(List.of(SubCommand.builder()
-                                        .commandValue("Причина")
-                                        .argumentType(ArgumentType.SOME_VALUE)
+                                        .commandValue("Длительность")
                                         .required(true)
+                                        .argumentType(ArgumentType.DURATION)
                                         .subCommands(List.of(SubCommand.builder()
-                                                .commandValue("Длительность")
+                                                .commandValue("Причина")
+                                                .argumentType(ArgumentType.SOME_VALUE)
                                                 .required(true)
-                                                .argumentType(ArgumentType.DURATION)
                                                 .build()))
                                         .build()))
                                 .build()))

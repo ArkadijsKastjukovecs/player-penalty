@@ -142,7 +142,6 @@ public class Ticket {
         }
 
         public Ticket build() {
-
             return new Ticket(this);
         }
     }

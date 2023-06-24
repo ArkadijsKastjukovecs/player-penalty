@@ -5,6 +5,7 @@ import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class DiscordSRVManager {
@@ -23,12 +24,13 @@ public class DiscordSRVManager {
         if (plugin.getServer().getPluginManager().isPluginEnabled("PlayerPoints")) {
             discordSRV = DiscordSRV.getPlugin();
             System.out.println("DISCORDSRV: " + discordSRV);
-            new Thread(() -> {
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 for (int i = 5; i > 0; i--) {
                     accountLinkManager = discordSRV.getAccountLinkManager();
                     System.out.println("Getting accountLinkManager: " + accountLinkManager);
                     if (accountLinkManager != null) {
-                        return;
+                        break;
                     }
                     try {
                         Thread.sleep(1000);
@@ -36,17 +38,17 @@ public class DiscordSRVManager {
                         throw new RuntimeException(e);
                     }
                 }
-            }).start();
+            });
 
-            new Thread(() -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 for (int i = 5; i > 0; i--) {
                     penaltiesChannel = discordSRV.getJda().getTextChannelsByName("penalties", false)
                             .stream()
                             .findAny().orElse(null);
-                    System.out.println("Getting penalties channel: " + accountLinkManager);
+                    System.out.println("Getting penalties channel: " + penaltiesChannel);
                     if (penaltiesChannel != null) {
                         discordMessageSender = new DiscordMessageSender(penaltiesChannel);
-                        return;
+                        break;
                     }
                     try {
                         Thread.sleep(1000);
@@ -54,7 +56,7 @@ public class DiscordSRVManager {
                         throw new RuntimeException(e);
                     }
                 }
-            }).start();
+            });
         }
     }
 

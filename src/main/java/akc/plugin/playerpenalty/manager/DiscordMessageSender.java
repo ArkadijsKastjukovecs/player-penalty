@@ -6,6 +6,7 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -24,7 +25,7 @@ public class DiscordMessageSender {
                         
             Немедленны выплатите его в банке или пострадавшему, иначе со временем он удвоится!
             """;
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(new Locale("ru"));
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy", new Locale("ru"));
 
     private final TextChannel channelToSend;
 
@@ -42,18 +43,18 @@ public class DiscordMessageSender {
     }
 
     private void sendIssueTicket(Ticket ticket) {
-        channelToSend.sendMessage(".").queue(message ->
-                message.editMessage("<@%s>".formatted(ticket.getTargetPlayerDiscordId()))
-                        .setEmbeds(List.of(createIssueEmbed(ticket, message))).queue());
+        channelToSend.sendMessage("<@%s>".formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
+                message.editMessageEmbeds(List.of(createIssueEmbed(ticket, message))).queue());
     }
 
     private MessageEmbed createIssueEmbed(Ticket ticket, Message message) {
+        final var formattedDate = ticket.getDeadline().atOffset(ZoneOffset.UTC).format(dateTimeFormatter);
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
 //                .setThumbnail(null) // TODO
                 .addField(
                         ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getName(), message.getId(), ticket.getPenaltyAmount()),
-                        ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), ticket.getDeadline().format(dateTimeFormatter)),
+                        ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), formattedDate),
                         false)
                 .build();
     }
