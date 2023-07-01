@@ -27,12 +27,17 @@ public class DiscordMessageSender {
                         
             Немедленны выплатите его в банке или пострадавшему, иначе со временем он удвоится!
             """;
+
     private static final String PAY_FINE_FIELD_NAME_TEMPLATE = """
-            :people_hugging: Штраф %s игрока %s был прощен игроком %s!
+            :people_hugging: Штраф %s игрока %s был оплачен игроку %s!
             """;
     private static final String PAY_FINE_FIELD_VALUE_TEMPLATE = """
                         
             В следующий раз больше не нарушайте!
+            """;
+
+    private static final String FORGIVE_FIELD_NAME_TEMPLATE = """
+            :people_hugging: Штраф %s игрока %s был прощен игроком %s!
             """;
 
     private final DateTimeFormatter dateTimeFormatter;
@@ -50,6 +55,7 @@ public class DiscordMessageSender {
         switch (ticket.getTicketType()) {
             case ISSUE -> sendIssueTicket(ticket);
             case PARDON -> sendPardonTicket(ticket);
+            case FORGIVE -> sendForgiveTicket(ticket);
             default -> {
             }
         }
@@ -63,6 +69,11 @@ public class DiscordMessageSender {
     private void sendIssueTicket(Ticket ticket) {
         channelToSend.sendMessage("<@%s>".formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
                 message.editMessageEmbeds(List.of(createIssueEmbed(ticket, message))).queue());
+    }
+
+    private void sendForgiveTicket(Ticket ticket) {
+        channelToSend.sendMessage("<@%s>".formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
+                message.editMessageEmbeds(List.of(createForgiveeEmbed(ticket, message))).queue());
     }
 
     private MessageEmbed createIssueEmbed(Ticket ticket, Message message) {
@@ -85,6 +96,18 @@ public class DiscordMessageSender {
 //                .setThumbnail(null) // TODO
                 .addField(
                         PAY_FINE_FIELD_NAME_TEMPLATE.formatted(ticket.getTicketNumber(), ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
+                        PAY_FINE_FIELD_VALUE_TEMPLATE,
+                        false)
+                .build();
+    }
+
+    private MessageEmbed createForgiveeEmbed(Ticket ticket, Message message) {
+        ticket.setTicketNumber(message.getId());
+        return new EmbedBuilder()
+                .setColor(ticket.getTicketType().getTicketColor())
+//                .setThumbnail(null) // TODO
+                .addField(
+                        FORGIVE_FIELD_NAME_TEMPLATE.formatted(ticket.getTicketNumber(), ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
                         PAY_FINE_FIELD_VALUE_TEMPLATE,
                         false)
                 .build();

@@ -10,8 +10,10 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DiscordSRVManager {
@@ -22,10 +24,12 @@ public class DiscordSRVManager {
     private DiscordSRV discordSRV;
     private TextChannel penaltiesChannel;
     private DiscordMessageSender discordMessageSender;
+    private int connectionRetryCount;
 
     public DiscordSRVManager(PlayerPenaltyPlugin playerPenaltyPlugin) {
         this.plugin = playerPenaltyPlugin;
         this.channelToSendMessages = plugin.getConfigManager().getConfigValue(ConfigurationFields.DISCORD_CHANNEL_NAME);
+        this.connectionRetryCount = getConnectionRetryCount();
     }
 
     public void initDiscordSrv() {
@@ -33,7 +37,7 @@ public class DiscordSRVManager {
             System.out.println("DISCORDSRV: " + discordSRV);
 
             Bukkit.getScheduler().runTask(plugin, () -> {
-                for (int i = 5; i >= 0; i--) {
+                for (int i = connectionRetryCount; i >= 0; i--) {
                     this.accountLinkManager = discordSRV.getAccountLinkManager();
                     if (accountLinkManager != null) {
                         System.out.println("Account link manager successfully obtained");
@@ -48,7 +52,7 @@ public class DiscordSRVManager {
             });
 
             Bukkit.getScheduler().runTask(plugin, () -> {
-                for (int i = 5; i >= 0; i--) {
+                for (int i = connectionRetryCount; i >= 0; i--) {
                     this.penaltiesChannel = discordSRV.getJda().getTextChannelsByName(channelToSendMessages, false)
                             .stream()
                             .findAny().orElse(null);
@@ -90,5 +94,13 @@ public class DiscordSRVManager {
 
     public TextChannel getPenaltiesChannel() {
         return penaltiesChannel;
+    }
+
+    @NotNull
+    private Integer getConnectionRetryCount() {
+        return Optional.of(plugin.getConfigManager())
+                .map(mainConfigManager -> mainConfigManager.getConfigValue(ConfigurationFields.CONNECTION_RETRY_COUNT))
+                .map(Integer::valueOf)
+                .orElseGet(() -> Integer.valueOf(ConfigurationFields.CONNECTION_RETRY_COUNT.getDefaultValue()));
     }
 }

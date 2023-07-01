@@ -1,5 +1,7 @@
 package akc.plugin.playerpenalty.commands;
 
+import akc.plugin.playerpenalty.domain.ArgumentType;
+
 import java.util.ArrayList;
 import java.util.List;
 

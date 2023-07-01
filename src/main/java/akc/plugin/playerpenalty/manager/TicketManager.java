@@ -31,7 +31,7 @@ public class TicketManager {
     public List<Ticket> findOpenIssues(Player player) {
         return findTicketsOnPlayer(player).stream()
                 .filter(ticket -> ticket.getTicketType().equals(TicketType.ISSUE))
-                .filter(not(Ticket::isPaid))
+                .filter(not(Ticket::isResolved))
                 .collect(Collectors.toList());
     }
 
@@ -47,4 +47,10 @@ public class TicketManager {
         playerTicketMap.put(player, ticketList);
     }
 
+    public List<Ticket> findOpenIssuebyVictim(Player player) {
+        return playerTicketMap.values().stream()
+                .flatMap(Collection::stream)
+                .filter(it -> it.getVictim().equals(player))
+                .toList();
+    }
 }

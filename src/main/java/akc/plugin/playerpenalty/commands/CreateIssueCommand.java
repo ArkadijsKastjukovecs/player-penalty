@@ -1,6 +1,7 @@
 package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
+import akc.plugin.playerpenalty.domain.ArgumentType;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
 import akc.plugin.playerpenalty.manager.DiscordSRVManager;

@@ -4,7 +4,8 @@ public enum ConfigurationFields {
     DISCORD_CHANNEL_NAME("penalties"),
     TIME_DISPLAY_FORMAT("EEE MMM dd HH:mm:ss yyyy"),
     CURRENT_ZONE_ID("Europe/Riga"),
-    LOCALE("ru");
+    LOCALE("ru"),
+    CONNECTION_RETRY_COUNT("5");
 
 
     private final String defaultValue;

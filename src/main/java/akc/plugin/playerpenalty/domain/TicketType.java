@@ -3,7 +3,8 @@ package akc.plugin.playerpenalty.domain;
 public enum TicketType {
 
     ISSUE(11997457),
-    PARDON(52084);
+    PARDON(52084),
+    FORGIVE(39129);
 
     private final int ticketColor;
 

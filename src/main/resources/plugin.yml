@@ -8,3 +8,5 @@ commands:
     description: "Выписать штраф человеку"
   payFine:
     description: "Оплатить штраф"
+  forgive:
+    description: "Простить обидчика, закрыть штраф"

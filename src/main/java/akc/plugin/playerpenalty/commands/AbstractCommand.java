@@ -2,6 +2,7 @@ package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.config.ConfigurationFields;
+import akc.plugin.playerpenalty.domain.ArgumentType;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.manager.TicketManager;
 import org.bukkit.Bukkit;
