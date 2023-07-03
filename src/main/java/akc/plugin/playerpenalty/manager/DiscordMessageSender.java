@@ -56,12 +56,14 @@ public class DiscordMessageSender {
 
     private final DateTimeFormatter dateTimeFormatter;
     private final TextChannel channelToSend;
+    private final String skinApi;
 
     public DiscordMessageSender(PlayerPenaltyPlugin plugin, TextChannel channelToSend) {
         String timeDisplayFormat = plugin.getConfigManager().getConfigValue(ConfigurationFields.TIME_DISPLAY_FORMAT);
         String locale = plugin.getConfigManager().getConfigValue(ConfigurationFields.LOCALE);
         this.dateTimeFormatter = DateTimeFormatter.ofPattern(timeDisplayFormat, new Locale(locale));
         this.channelToSend = channelToSend;
+        this.skinApi = plugin.getConfigManager().getConfigValue(ConfigurationFields.SKIN_API);
     }
 
     public void sendMessageToDiscord(Ticket ticket) {
@@ -99,7 +101,7 @@ public class DiscordMessageSender {
         ticket.setTicketNumber(message.getId());
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-//                .setThumbnail(null) // TODO
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
                 .addField(
                         ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getName(), message.getId(), ticket.getPenaltyAmount()),
                         ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), formattedDate),
@@ -112,7 +114,7 @@ public class DiscordMessageSender {
         ticket.setTicketNumber(message.getId());
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-//                .setThumbnail(null) // TODO
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
                 .addField(
                         PAY_FINE_FIELD_NAME_TEMPLATE.formatted(originalTicketNumber, ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
                         PAY_FINE_FIELD_VALUE_TEMPLATE,
@@ -125,7 +127,7 @@ public class DiscordMessageSender {
         ticket.setTicketNumber(message.getId());
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-//                .setThumbnail(null) // TODO
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
                 .addField(
                         FORGIVE_FIELD_NAME_TEMPLATE.formatted(originalTicketNumber, ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
                         PAY_FINE_FIELD_VALUE_TEMPLATE,
@@ -139,7 +141,7 @@ public class DiscordMessageSender {
         ticket.setTicketNumber(message.getId());
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-//                .setThumbnail(null) // TODO
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
                 .addField(
                         DOUBLE_ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getName(), originalTicketNumber, message.getId(), ticket.getPenaltyAmount()),
                         DOUBLE_ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), formattedDate),

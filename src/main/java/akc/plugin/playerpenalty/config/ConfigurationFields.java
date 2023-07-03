@@ -5,8 +5,8 @@ public enum ConfigurationFields {
     TIME_DISPLAY_FORMAT("EEE MMM dd HH:mm:ss yyyy"),
     CURRENT_ZONE_ID("Europe/Riga"),
     LOCALE("ru"),
-    CONNECTION_RETRY_COUNT("5");
-
+    CONNECTION_RETRY_COUNT("5"),
+    SKIN_API("https://crafatar.com/renders/body/%s");
 
     private final String defaultValue;
 
