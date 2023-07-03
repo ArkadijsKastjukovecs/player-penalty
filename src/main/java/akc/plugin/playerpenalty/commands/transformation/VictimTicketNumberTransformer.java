@@ -17,7 +17,7 @@ public class VictimTicketNumberTransformer implements BiFunction<String, Player,
 
     @Override
     public Ticket apply(String ticketNumber, Player player) {
-        return ticketManager.findOpenIssuebyVictim(player).stream()
+        return ticketManager.findOpenIssueByVictim(player).stream()
                 .filter(ticket -> ticket.getTicketNumber().equals(ticketNumber))
                 .findAny()
                 .orElse(null);

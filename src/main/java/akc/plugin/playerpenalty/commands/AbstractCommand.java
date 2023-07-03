@@ -17,10 +17,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@SuppressWarnings({"java:S3740", "unchecked"}) //unchecked
+@SuppressWarnings({"java:S3740", "unchecked"})
 public abstract class AbstractCommand implements TabExecutor {
 
     private static final List<String> DURATION_SUGGESTIONS = List.of("1d", "10m", "5h30m", "40s", "2w");
+    private static final List<String> NUMBER_SUGGESTIONS = List.of("1", "10", "100", "1000");
     protected final List<SubCommand<?>> subCommands;
     protected final PlayerPenaltyPlugin plugin;
     protected final TicketManager ticketManager;
@@ -72,8 +73,8 @@ public abstract class AbstractCommand implements TabExecutor {
         int finalCurrentArg = currentArg;
         final var subCommandOpt = commands.stream()
                 .filter(subCommand -> {
-                    final Object transformedValue = subCommand.getArgumentType().equals(ArgumentType.TICKET_NUMBER) ?
-                            subCommand.getPlayerValueTransformer().apply(args[finalCurrentArg], (Player) sender) :
+                    final var transformedValue = subCommand.getArgumentType().equals(ArgumentType.TICKET_NUMBER) ?
+                            subCommand.getPlayerValueTransformer().apply(args[finalCurrentArg], sender) :
                             subCommand.getValueTransformer().apply(args[finalCurrentArg]);
                     final var isCommandValid = subCommand.getValidationFunction().test(transformedValue);
                     if (isCommandValid) {
@@ -117,6 +118,11 @@ public abstract class AbstractCommand implements TabExecutor {
             final var anyCommandAllowsDuration = subCommands.stream().anyMatch(it -> it.getArgumentType().equals(ArgumentType.DURATION));
             if (anyCommandAllowsDuration) {
                 commandsSuggestions.addAll(DURATION_SUGGESTIONS);
+            }
+
+            final var anyCommandAllowsNumber = subCommands.stream().anyMatch(it -> it.getArgumentType().equals(ArgumentType.NUMBER));
+            if (anyCommandAllowsNumber) {
+                commandsSuggestions.addAll(NUMBER_SUGGESTIONS);
             }
 
             subCommands.stream()
@@ -173,7 +179,7 @@ public abstract class AbstractCommand implements TabExecutor {
         return argsToReturn.toArray(new String[0]);
     }
 
-    private boolean commandIsTyped(SubCommand subCommand, String typedValue) {
+    private boolean commandIsTyped(SubCommand<?> subCommand, String typedValue) {
         final var argumentType = subCommand.getArgumentType();
         if (argumentType.equals(ArgumentType.COMMAND)) {
             return typedValue.equals(subCommand.getCommandValue());

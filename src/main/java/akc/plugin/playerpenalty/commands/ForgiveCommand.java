@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.function.Predicate.not;
+
 public class ForgiveCommand extends AbstractCommand {
 
     public ForgiveCommand(PlayerPenaltyPlugin plugin) {
@@ -23,10 +25,13 @@ public class ForgiveCommand extends AbstractCommand {
 
         final var originalTicket = ticketManager.findOriginalTicket(newTicket.getTicketNumber());
         originalTicket.setResolved(true);
+        newTicket.setResolved(true);
 
         plugin.getDiscordSRVManager().sendMEssageToDiscord(newTicket);
         ticketManager.addTicketToPlayer(newTicket.getTargetPlayer(), newTicket);
         ticketManager.save(originalTicket);
+        plugin.getScheduledTaskHandler().cancelTask(originalTicket);
+        sender.sendMessage("Штраф под номером %s прощен".formatted(originalTicket.getTicketNumber()));
 
         return true;
     }
@@ -38,8 +43,15 @@ public class ForgiveCommand extends AbstractCommand {
                 .buildAppender((newTicket, foundTicket) -> foundTicket.copyTo(newTicket))
                 .validationFunction(validationManager.getTicketNumberValidationFunction())
                 .playerValueTransformer(transformerManager.getVictimTicketNumberTransformer())
-                .customSuggestionProvider(player -> ticketManager.findOpenIssuebyVictim(player).stream().map(Ticket::getTicketNumber).toList())
+                .customSuggestionProvider(this::getOpenIssues)
                 .required(true)
                 .build();
+    }
+
+    private List<String> getOpenIssues(Player player) {
+        return ticketManager.findOpenIssueByVictim(player).stream()
+                .filter(not(Ticket::isResolved))
+                .map(Ticket::getTicketNumber)
+                .toList();
     }
 }

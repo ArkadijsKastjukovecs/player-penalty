@@ -17,7 +17,7 @@ public class ValidationManager {
         this.numberValidationFunction = new NumberValidationFunction();
         this.durationValidationFunction = new DurationValidationFunction();
         this.someValueValidationFunction = new SomeValueValidationFunction();
-        this.ticketNumberValidationFunction = new TicketNumberValidationFunction();
+        this.ticketNumberValidationFunction = new TicketNumberValidationFunction(plugin);
     }
 
     public PlayerValidationFunction getPlayerValidator() {

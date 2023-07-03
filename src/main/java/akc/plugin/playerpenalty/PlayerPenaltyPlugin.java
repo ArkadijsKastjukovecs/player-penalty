@@ -5,6 +5,7 @@ import akc.plugin.playerpenalty.commands.CreateIssueCommand;
 import akc.plugin.playerpenalty.commands.ForgiveCommand;
 import akc.plugin.playerpenalty.commands.PayFineCommand;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
+import akc.plugin.playerpenalty.handlers.ScheduledTaskHandler;
 import akc.plugin.playerpenalty.manager.*;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -20,6 +21,7 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
     private TicketManager ticketManager;
     private ValidationManager validationManager;
     private TransformerManager transformerManager;
+    private ScheduledTaskHandler scheduledTaskHandler;
 
     @Override
     public void onEnable() {
@@ -34,6 +36,7 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         this.ticketManager = new TicketManager(this);
         this.validationManager = new ValidationManager(this);
         this.transformerManager = new TransformerManager(this);
+        this.scheduledTaskHandler = new ScheduledTaskHandler();
 
         // external plugins
         discordSRVManager = new DiscordSRVManager(this);
@@ -75,6 +78,10 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
 
     public TransformerManager getTransformerManager() {
         return transformerManager;
+    }
+
+    public ScheduledTaskHandler getScheduledTaskHandler() {
+        return scheduledTaskHandler;
     }
 
     private List<AbstractCommand> populateCommands() {

@@ -29,7 +29,7 @@ public class TicketManager {
 
     public List<Ticket> findOpenIssues(Player player) {
         return findTicketsOnPlayer(player).stream()
-                .filter(ticket -> ticket.getTicketType().equals(TicketType.ISSUE))
+                .filter(ticket -> TicketType.isIssue(ticket.getTicketType()))
                 .filter(not(Ticket::isResolved))
                 .collect(Collectors.toList());
     }
@@ -46,9 +46,10 @@ public class TicketManager {
         playerTicketMap.put(player, ticketList);
     }
 
-    public List<Ticket> findOpenIssuebyVictim(Player player) {
+    public List<Ticket> findOpenIssueByVictim(Player player) {
         return playerTicketMap.values().stream()
                 .flatMap(Collection::stream)
+                .filter(not(Ticket::isResolved))
                 .filter(it -> it.getVictim().equals(player))
                 .toList();
     }
@@ -56,7 +57,6 @@ public class TicketManager {
     public Ticket findOriginalTicket(String ticketNumber) {
         return playerTicketMap.values().stream()
                 .flatMap(Collection::stream)
-                .filter(it -> it.getTicketType().equals(TicketType.ISSUE))
                 .filter(it -> it.getTicketNumber().equals(ticketNumber))
                 .findFirst().orElse(null);
     }

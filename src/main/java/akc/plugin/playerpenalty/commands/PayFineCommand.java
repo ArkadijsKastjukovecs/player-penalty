@@ -7,9 +7,12 @@ import akc.plugin.playerpenalty.domain.TicketType;
 import akc.plugin.playerpenalty.manager.PlayerPointsManager;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.function.Predicate.not;
 
 public class PayFineCommand extends AbstractCommand {
 
@@ -27,7 +30,6 @@ public class PayFineCommand extends AbstractCommand {
 
         final var originalTicket = ticketManager.findOriginalTicket(newTicket.getTicketNumber());
 
-
         final var pointsAPI = playerPointsManager.getPointsAPI();
         final var ticketPaid = pointsAPI.pay(newTicket.getTargetPlayer().getUniqueId(), newTicket.getVictim().getUniqueId(), newTicket.getPenaltyAmount());
 
@@ -37,6 +39,7 @@ public class PayFineCommand extends AbstractCommand {
             plugin.getDiscordSRVManager().sendMEssageToDiscord(newTicket);
             ticketManager.addTicketToPlayer(newTicket.getTargetPlayer(), newTicket);
             ticketManager.save(originalTicket);
+            plugin.getScheduledTaskHandler().cancelTask(originalTicket);
             sender.sendMessage("Штраф под номером %s успешно оплачен".formatted(newTicket.getTicketNumber()));
         } else {
             sender.sendMessage("Произошла ошибка оплаты штрафа под номером %s".formatted(newTicket.getTicketNumber()));
@@ -52,8 +55,16 @@ public class PayFineCommand extends AbstractCommand {
                 .buildAppender((emptyTicket, foundTicket) -> foundTicket.copyTo(emptyTicket))
                 .validationFunction(validationManager.getTicketNumberValidationFunction())
                 .playerValueTransformer(transformerManager.getTargetPlayerTicketNumberTransformer())
-                .customSuggestionProvider(player -> ticketManager.findOpenIssues(player).stream().map(Ticket::getTicketNumber).toList())
+                .customSuggestionProvider(this::getOpenTickets)
                 .required(true)
                 .build();
+    }
+
+    @NotNull
+    private List<String> getOpenTickets(Player player) {
+        return ticketManager.findOpenIssues(player).stream()
+                .filter(not(Ticket::isResolved))
+                .map(Ticket::getTicketNumber)
+                .toList();
     }
 }
