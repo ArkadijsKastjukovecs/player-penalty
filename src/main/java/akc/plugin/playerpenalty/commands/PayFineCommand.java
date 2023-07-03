@@ -4,76 +4,55 @@ import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.domain.ArgumentType;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
-import akc.plugin.playerpenalty.manager.DiscordSRVManager;
 import akc.plugin.playerpenalty.manager.PlayerPointsManager;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PayFineCommand extends AbstractCommand {
 
-    private final DiscordSRVManager discordSRVManager;
     private final PlayerPointsManager playerPointsManager;
 
     public PayFineCommand(PlayerPenaltyPlugin plugin) {
-        super(List.of(createSubCommand()), plugin, "payFine");
-        this.discordSRVManager = plugin.getDiscordSRVManager();
+        super(new ArrayList<>(), plugin, "payFine", List.of(Player.class));
+        subCommands.add(createSubCommand());
         this.playerPointsManager = plugin.getPlayerPointsManager();
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    protected boolean handleCommand(CommandSender sender, Ticket newTicket, String[] args) {
+        newTicket.setTicketType(TicketType.PARDON);
 
-        if (sender instanceof Player player) {
-            final var invalidArgument = validateArgs(args);
-            if (invalidArgument != null) {
-                sender.sendMessage("не удалось распознать параметр %s".formatted(invalidArgument));
-                return true;
-            }
+        final var originalTicket = ticketManager.findOriginalTicket(newTicket.getTicketNumber());
 
-            final var ticketToBePaid = ticketManager.findOpenIssues(player).stream()
-                    .filter(ticket -> ticket.getTicketNumber().equals(args[0]))
-                    .findAny()
-                    .orElseThrow();
 
-            final var pointsAPI = playerPointsManager.getPointsAPI();
-            final var ticketPaid = pointsAPI.pay(player.getUniqueId(), ticketToBePaid.getVictim().getUniqueId(), ticketToBePaid.getPenaltyAmount());
+        final var pointsAPI = playerPointsManager.getPointsAPI();
+        final var ticketPaid = pointsAPI.pay(newTicket.getTargetPlayer().getUniqueId(), newTicket.getVictim().getUniqueId(), newTicket.getPenaltyAmount());
 
-            if (ticketPaid) {
-                ticketToBePaid.markAsResolved();
-                final var payFineTicket = createPayFineTicket(ticketToBePaid);
-                discordSRVManager.sendMEssageToDiscord(payFineTicket);
-                ticketManager.addTicketToPlayer(player, payFineTicket);
-                player.sendMessage("Штраф под номером %s успешно оплачен".formatted(ticketToBePaid.getTicketNumber()));
-            } else {
-                player.sendMessage("Произошла ошибка оплаты штрафа под номером %s".formatted(ticketToBePaid.getTicketNumber()));
-            }
-
+        if (ticketPaid) {
+            originalTicket.setResolved(true);
+            newTicket.setResolved(true);
+            plugin.getDiscordSRVManager().sendMEssageToDiscord(newTicket);
+            ticketManager.addTicketToPlayer(newTicket.getTargetPlayer(), newTicket);
+            ticketManager.save(originalTicket);
+            sender.sendMessage("Штраф под номером %s успешно оплачен".formatted(newTicket.getTicketNumber()));
         } else {
-            sender.sendMessage("Только игроки могут отправлять эту комманду");
+            sender.sendMessage("Произошла ошибка оплаты штрафа под номером %s".formatted(newTicket.getTicketNumber()));
         }
 
         return true;
     }
 
-    private Ticket createPayFineTicket(Ticket originalTicket) {
-        return originalTicket.copyBuilder()
-                .ticketType(TicketType.PARDON)
-                .build();
-    }
-
-    private String validateArgs(String[] args) {
-        // TODO
-        return null;
-    }
-
-    private static SubCommand createSubCommand() {
-        return SubCommand.builder()
+    private SubCommand<?> createSubCommand() {
+        return SubCommand.<Ticket>builder()
                 .commandValue("Номер_тикета")
                 .argumentType(ArgumentType.TICKET_NUMBER)
+                .buildAppender((emptyTicket, foundTicket) -> foundTicket.copyTo(emptyTicket))
+                .validationFunction(validationManager.getTicketNumberValidationFunction())
+                .playerValueTransformer(transformerManager.getTargetPlayerTicketNumberTransformer())
+                .customSuggestionProvider(player -> ticketManager.findOpenIssues(player).stream().map(Ticket::getTicketNumber).toList())
                 .required(true)
                 .build();
     }

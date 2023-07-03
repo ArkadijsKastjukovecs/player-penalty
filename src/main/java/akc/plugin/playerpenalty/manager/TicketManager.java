@@ -20,7 +20,6 @@ public class TicketManager {
     }
 
     public void initTicketManager() {
-
     }
 
     public List<Ticket> findTicketsOnPlayer(Player player) {
@@ -52,5 +51,18 @@ public class TicketManager {
                 .flatMap(Collection::stream)
                 .filter(it -> it.getVictim().equals(player))
                 .toList();
+    }
+
+    public Ticket findOriginalTicket(String ticketNumber) {
+        return playerTicketMap.values().stream()
+                .flatMap(Collection::stream)
+                .filter(it -> it.getTicketType().equals(TicketType.ISSUE))
+                .filter(it -> it.getTicketNumber().equals(ticketNumber))
+                .findFirst().orElse(null);
+    }
+
+    public Ticket save(Ticket ticketToSave) {
+        // TODO implement when DB is connected
+        return ticketToSave;
     }
 }

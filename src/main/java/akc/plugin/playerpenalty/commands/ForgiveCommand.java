@@ -4,61 +4,41 @@ import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.domain.ArgumentType;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ForgiveCommand extends AbstractCommand {
 
     public ForgiveCommand(PlayerPenaltyPlugin plugin) {
-        super(List.of(createSubCommand()), plugin, "forgive");
+        super(new ArrayList<>(), plugin, "forgive", List.of(Player.class));
+        subCommands.add(createSubCommand());
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    protected boolean handleCommand(CommandSender sender, Ticket newTicket, String[] args) {
+        newTicket.setTicketType(TicketType.FORGIVE);
 
-        if (sender instanceof Player player) {
-            final var invalidArgument = validateArgs(args);
-            if (invalidArgument != null) {
-                sender.sendMessage("не удалось распознать параметр %s".formatted(invalidArgument));
-                return true;
-            }
+        final var originalTicket = ticketManager.findOriginalTicket(newTicket.getTicketNumber());
+        originalTicket.setResolved(true);
 
-            final var issueTicket = ticketManager.findOpenIssuebyVictim(player).stream()
-                    .filter(ticket -> ticket.getTicketNumber().equals(args[0]))
-                    .findAny()
-                    .orElseThrow();
-
-            final var forgiveTicket = createForgiveTicket(issueTicket);
-            issueTicket.markAsResolved();
-            plugin.getDiscordSRVManager().sendMEssageToDiscord(forgiveTicket);
-            ticketManager.addTicketToPlayer(forgiveTicket.getTargetPlayer(), forgiveTicket);
-        } else {
-            sender.sendMessage("Только игроки могут отправлять эту комманду");
-            return true;
-        }
+        plugin.getDiscordSRVManager().sendMEssageToDiscord(newTicket);
+        ticketManager.addTicketToPlayer(newTicket.getTargetPlayer(), newTicket);
+        ticketManager.save(originalTicket);
 
         return true;
     }
 
-    private Ticket createForgiveTicket(Ticket originalTicket) {
-        return originalTicket.copyBuilder()
-                .ticketType(TicketType.FORGIVE)
-                .build();
-    }
-
-    private String validateArgs(String[] args) {
-        // TODO
-        return null;
-    }
-
-    private static SubCommand createSubCommand() {
-        return SubCommand.builder()
+    private SubCommand<?> createSubCommand() {
+        return SubCommand.<Ticket>builder()
                 .commandValue("Номер_тикета")
                 .argumentType(ArgumentType.TICKET_NUMBER)
+                .buildAppender((newTicket, foundTicket) -> foundTicket.copyTo(newTicket))
+                .validationFunction(validationManager.getTicketNumberValidationFunction())
+                .playerValueTransformer(transformerManager.getVictimTicketNumberTransformer())
+                .customSuggestionProvider(player -> ticketManager.findOpenIssuebyVictim(player).stream().map(Ticket::getTicketNumber).toList())
                 .required(true)
                 .build();
     }

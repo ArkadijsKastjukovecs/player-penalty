@@ -6,59 +6,96 @@ import java.time.LocalDateTime;
 
 public class Ticket {
 
-    private final TicketType ticketType;
-    private final Player targetPlayer;
-    private final Player policePlayer;
-    private final String targetPlayerDiscordId;
-    private final int penaltyAmount;
-    private final Player victim;
-    private final String reason;
-    private final LocalDateTime deadline;
-
+    private TicketType ticketType;
+    private Player targetPlayer;
+    private Player policePlayer;
+    private String targetPlayerDiscordId;
+    private int penaltyAmount;
+    private Player victim;
+    private String reason;
+    private LocalDateTime deadline;
     private boolean resolved;
     private String ticketNumber;
 
-    public Builder copyBuilder() {
-        return builder()
-                .ticketType(this.ticketType)
-                .penaltyAmount(this.penaltyAmount)
-                .reason(this.reason)
-                .targetPlayerDiscordId(this.targetPlayerDiscordId)
-                .ticketNumber(this.ticketNumber)
-                .victim(this.victim)
-                .targetPlayer(this.targetPlayer)
-                .policePlayer(this.policePlayer)
-                .deadline(this.deadline)
-                .resolved(this.resolved);
-    }
-
-    private Ticket(Builder b) {
-        this.ticketType = b.ticketType;
-        this.penaltyAmount = b.penaltyAmount;
-        this.reason = b.reason;
-        this.targetPlayerDiscordId = b.targetPlayerDiscordId;
-        this.ticketNumber = b.ticketNumber;
-        this.victim = b.victim;
-        this.targetPlayer = b.targetPlayer;
-        this.policePlayer = b.policePlayer;
-        this.deadline = b.deadline;
-        this.resolved = b.resolved;
-    }
 
     public TicketType getTicketType() {
         return ticketType;
+    }
+
+    public Ticket setTicketType(TicketType ticketType) {
+        this.ticketType = ticketType;
+        return this;
     }
 
     public Player getTargetPlayer() {
         return targetPlayer;
     }
 
+    public Ticket setTargetPlayer(Player targetPlayer) {
+        this.targetPlayer = targetPlayer;
+        return this;
+    }
+
+    public Player getPolicePlayer() {
+        return policePlayer;
+    }
+
+    public Ticket setPolicePlayer(Player policePlayer) {
+        this.policePlayer = policePlayer;
+        return this;
+    }
+
     public String getTargetPlayerDiscordId() {
         return targetPlayerDiscordId;
     }
 
-    public Ticket setTicketNumber(String ticketNumber) {
-        this.ticketNumber = ticketNumber;
+    public Ticket setTargetPlayerDiscordId(String targetPlayerDiscordId) {
+        this.targetPlayerDiscordId = targetPlayerDiscordId;
+        return this;
+    }
+
+    public int getPenaltyAmount() {
+        return penaltyAmount;
+    }
+
+    public Ticket setPenaltyAmount(int penaltyAmount) {
+        this.penaltyAmount = penaltyAmount;
+        return this;
+    }
+
+    public Player getVictim() {
+        return victim;
+    }
+
+    public Ticket setVictim(Player victim) {
+        this.victim = victim;
+        return this;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public Ticket setReason(String reason) {
+        this.reason = reason;
+        return this;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public Ticket setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+        return this;
+    }
+
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public Ticket setResolved(boolean resolved) {
+        this.resolved = resolved;
         return this;
     }
 
@@ -66,105 +103,22 @@ public class Ticket {
         return ticketNumber;
     }
 
-    public int getPenaltyAmount() {
-        return penaltyAmount;
+    public Ticket setTicketNumber(String ticketNumber) {
+        this.ticketNumber = ticketNumber;
+        return this;
     }
 
-    public Player getVictim() {
-        return victim;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public LocalDateTime getDeadline() {
-        return deadline;
-    }
-
-    public Player getPolicePlayer() {
-        return policePlayer;
-    }
-
-    public void markAsResolved() {
-        this.resolved = true;
-    }
-
-    public boolean isResolved() {
-        return resolved;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static final class Builder {
-        private TicketType ticketType;
-        private Player targetPlayer;
-        private Player policePlayer;
-        private String targetPlayerDiscordId;
-        private String ticketNumber;
-        private int penaltyAmount;
-        private Player victim;
-        private String reason;
-        private LocalDateTime deadline;
-        private boolean resolved = false;
-
-        private Builder() {
-        }
-
-        public Builder ticketType(TicketType ticketType) {
-            this.ticketType = ticketType;
-            return this;
-        }
-
-        public Builder targetPlayer(Player targetPlayer) {
-            this.targetPlayer = targetPlayer;
-            return this;
-        }
-
-        public Builder policePlayer(Player policePlayer) {
-            this.policePlayer = policePlayer;
-            return this;
-        }
-
-        public Builder targetPlayerDiscordId(String targetPlayerDiscordId) {
-            this.targetPlayerDiscordId = targetPlayerDiscordId;
-            return this;
-        }
-
-        public Builder ticketNumber(String ticketNumber) {
-            this.ticketNumber = ticketNumber;
-            return this;
-        }
-
-        public Builder penaltyAmount(int penaltyAmount) {
-            this.penaltyAmount = penaltyAmount;
-            return this;
-        }
-
-        public Builder victim(Player victim) {
-            this.victim = victim;
-            return this;
-        }
-
-        public Builder reason(String reason) {
-            this.reason = reason;
-            return this;
-        }
-
-        public Builder deadline(LocalDateTime deadline) {
-            this.deadline = deadline;
-            return this;
-        }
-
-        public Builder resolved(boolean resolved) {
-            this.resolved = resolved;
-            return this;
-        }
-
-        public Ticket build() {
-            return new Ticket(this);
-        }
+    public Ticket copyTo(Ticket ticket) {
+        return ticket
+                .setTicketType(getTicketType())
+                .setTargetPlayer(getTargetPlayer())
+                .setPolicePlayer(getPolicePlayer())
+                .setTargetPlayerDiscordId(getTargetPlayerDiscordId())
+                .setPenaltyAmount(getPenaltyAmount())
+                .setVictim(getVictim())
+                .setReason(getReason())
+                .setDeadline(getDeadline())
+                .setResolved(isResolved())
+                .setTicketNumber(getTicketNumber());
     }
 }
