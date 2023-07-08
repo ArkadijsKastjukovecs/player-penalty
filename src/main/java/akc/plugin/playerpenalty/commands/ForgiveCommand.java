@@ -7,7 +7,6 @@ import akc.plugin.playerpenalty.domain.TicketType;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.function.Predicate.not;
@@ -15,8 +14,7 @@ import static java.util.function.Predicate.not;
 public class ForgiveCommand extends AbstractCommand {
 
     public ForgiveCommand(PlayerPenaltyPlugin plugin) {
-        super(new ArrayList<>(), plugin, "forgive", List.of(Player.class));
-        subCommands.add(createSubCommand());
+        super(plugin, "forgive", List.of(Player.class));
     }
 
     @Override
@@ -34,6 +32,11 @@ public class ForgiveCommand extends AbstractCommand {
         sender.sendMessage("Штраф под номером %s прощен".formatted(originalTicket.getTicketNumber()));
 
         return true;
+    }
+
+    @Override
+    protected List<SubCommand<?>> createSubCommands() {
+        return List.of(createSubCommand());
     }
 
     private SubCommand<?> createSubCommand() {

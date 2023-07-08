@@ -9,18 +9,22 @@ import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 public class DiscordSRVManager {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiscordSRVManager.class);
+
     private final PlayerPenaltyPlugin plugin;
     private final String channelToSendMessages;
+    private final int connectionRetryCount;
     private AccountLinkManager accountLinkManager;
     private DiscordSRV discordSRV;
     private TextChannel penaltiesChannel;
     private DiscordMessageSender discordMessageSender;
-    private int connectionRetryCount;
 
     public DiscordSRVManager(PlayerPenaltyPlugin playerPenaltyPlugin) {
         this.plugin = playerPenaltyPlugin;
@@ -29,42 +33,12 @@ public class DiscordSRVManager {
     }
 
     public void initDiscordSrv() {
-            discordSRV = DiscordSRV.getPlugin();
-            System.out.println("DISCORDSRV: " + discordSRV);
+        this.discordSRV = DiscordSRV.getPlugin();
+        LOGGER.debug("Getting DiscordSrv plugin");
 
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                for (int i = connectionRetryCount; i >= 0; i--) {
-                    this.accountLinkManager = discordSRV.getAccountLinkManager();
-                    if (accountLinkManager != null) {
-                        System.out.println("Account link manager successfully obtained");
-                        break;
-                    }
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
+        Bukkit.getScheduler().runTask(plugin, this::obtainAccountLinkManager);
 
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                for (int i = connectionRetryCount; i >= 0; i--) {
-                    this.penaltiesChannel = discordSRV.getJda().getTextChannelsByName(channelToSendMessages, false)
-                            .stream()
-                            .findAny().orElse(null);
-                    System.out.println("Channel to send messages is not obtained");
-                    if (penaltiesChannel != null) {
-                        System.out.println("Channel to send messages successfully obtained");
-                        discordMessageSender = new DiscordMessageSender(plugin, getPenaltiesChannel());
-                        break;
-                    }
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
+        Bukkit.getScheduler().runTask(plugin, this::obtainChannelToSendPenalties);
     }
 
     public String getDiscordId(Player player) {
@@ -86,4 +60,39 @@ public class DiscordSRVManager {
                 .map(Integer::valueOf)
                 .orElseGet(() -> Integer.valueOf(ConfigurationFields.CONNECTION_RETRY_COUNT.getDefaultValue()));
     }
+
+
+    private void obtainChannelToSendPenalties() {
+        for (int i = connectionRetryCount; i >= 0; i--) {
+            this.penaltiesChannel = discordSRV.getJda().getTextChannelsByName(channelToSendMessages, false)
+                    .stream()
+                    .findAny().orElse(null);
+            if (penaltiesChannel != null) {
+                LOGGER.debug("Channel to send messages successfully obtained, channel name: {}", channelToSendMessages);
+                discordMessageSender = new DiscordMessageSender(plugin, getPenaltiesChannel());
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void obtainAccountLinkManager() {
+        for (int i = connectionRetryCount; i >= 0; i--) {
+            this.accountLinkManager = discordSRV.getAccountLinkManager();
+            if (accountLinkManager != null) {
+                LOGGER.debug("Account link manager successfully obtained");
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }

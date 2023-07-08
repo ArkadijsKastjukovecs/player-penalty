@@ -6,6 +6,7 @@ import akc.plugin.playerpenalty.config.ConfigurationFields;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public class DurationTransformer implements Function<String, LocalDateTime> {
 
@@ -34,7 +35,7 @@ public class DurationTransformer implements Function<String, LocalDateTime> {
         return currentTime;
     }
 
-    private final Function<String, Function<LocalDateTime, LocalDateTime>> toLocalDateAdjustment = arg -> {
+    private final Function<String, UnaryOperator<LocalDateTime>> toLocalDateAdjustment = arg -> {
         if (arg.contains("w")) {
             return localDateTime -> localDateTime.plusWeeks(Long.parseLong(arg.substring(0, arg.length() - 1)));
         }
@@ -50,6 +51,6 @@ public class DurationTransformer implements Function<String, LocalDateTime> {
         if (arg.contains("h")) {
             return localDateTime -> localDateTime.plusHours(Long.parseLong(arg.substring(0, arg.length() - 1)));
         }
-        return Function.identity();
+        return UnaryOperator.identity();
     };
 }

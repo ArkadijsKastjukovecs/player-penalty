@@ -22,7 +22,7 @@ public abstract class AbstractCommand implements TabExecutor {
 
     private static final List<String> DURATION_SUGGESTIONS = List.of("1d", "10m", "5h30m", "40s", "2w");
     private static final List<String> NUMBER_SUGGESTIONS = List.of("1", "10", "100", "1000");
-    protected final List<SubCommand<?>> subCommands;
+    private final List<SubCommand<?>> subCommands = new ArrayList<>();
     protected final PlayerPenaltyPlugin plugin;
     protected final TicketManager ticketManager;
     protected final ValidationManager validationManager;
@@ -31,21 +31,24 @@ public abstract class AbstractCommand implements TabExecutor {
     private final String commandName;
     private final List<Class<?>> allowedSenders;
 
-    protected AbstractCommand(List<SubCommand<?>> subCommands, PlayerPenaltyPlugin plugin, String commandName, List<Class<?>> allowedSenders) {
-        this.subCommands = subCommands;
+    protected AbstractCommand(PlayerPenaltyPlugin plugin, String commandName, List<Class<?>> allowedSenders) {
         this.plugin = plugin;
         this.commandName = commandName;
         this.ticketManager = plugin.getTicketManager();
         this.validationManager = plugin.getValidationManager();
         this.transformerManager = plugin.getTransformerManager();
         this.allowedSenders = allowedSenders;
+        subCommands.addAll(createSubCommands());
     }
+
+    @SuppressWarnings("java:S1452")
+    protected abstract List<SubCommand<?>> createSubCommands();
+
+    protected abstract boolean handleCommand(CommandSender sender, Ticket ticketBuilder, String[] args);
 
     public String getCommandName() {
         return commandName;
     }
-
-    protected abstract boolean handleCommand(CommandSender sender, Ticket ticketBuilder, String[] args);
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {

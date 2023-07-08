@@ -14,7 +14,6 @@ import org.bukkit.entity.Player;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 public class CreateIssueCommand extends AbstractCommand {
@@ -25,9 +24,8 @@ public class CreateIssueCommand extends AbstractCommand {
     private final ScheduledTaskHandler scheduledTaskHandler;
 
     public CreateIssueCommand(PlayerPenaltyPlugin plugin) {
-        super(new ArrayList<>(), plugin, "createIssue", List.of(Player.class));
+        super(plugin, "createIssue", List.of(Player.class));
         zoneId = plugin.getConfigManager().getConfigValue(ConfigurationFields.CURRENT_ZONE_ID);
-        this.subCommands.add(createSubCommand());
         this.discordSRVManager = plugin.getDiscordSRVManager();
         this.scheduledTaskHandler = plugin.getScheduledTaskHandler();
     }
@@ -46,6 +44,11 @@ public class CreateIssueCommand extends AbstractCommand {
         ticketManager.addTicketToPlayer(targetPlayer, ticket);
         scheduleRepeatTask(ticket);
         return false;
+    }
+
+    @Override
+    protected List<SubCommand<?>> createSubCommands() {
+        return List.of(createSubCommand());
     }
 
     private void scheduleRepeatTask(Ticket ticket) {

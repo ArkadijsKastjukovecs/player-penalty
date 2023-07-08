@@ -9,7 +9,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.function.Predicate.not;
@@ -19,8 +18,7 @@ public class PayFineCommand extends AbstractCommand {
     private final PlayerPointsManager playerPointsManager;
 
     public PayFineCommand(PlayerPenaltyPlugin plugin) {
-        super(new ArrayList<>(), plugin, "payFine", List.of(Player.class));
-        subCommands.add(createSubCommand());
+        super(plugin, "payFine", List.of(Player.class));
         this.playerPointsManager = plugin.getPlayerPointsManager();
     }
 
@@ -46,6 +44,11 @@ public class PayFineCommand extends AbstractCommand {
         }
 
         return true;
+    }
+
+    @Override
+    protected List<SubCommand<?>> createSubCommands() {
+        return List.of(createSubCommand());
     }
 
     private SubCommand<?> createSubCommand() {

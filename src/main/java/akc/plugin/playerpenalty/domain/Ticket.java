@@ -16,8 +16,6 @@ public class Ticket {
     private LocalDateTime deadline;
     private boolean resolved;
     private String ticketNumber;
-    private String originalTicketNumber;
-
 
     public TicketType getTicketType() {
         return ticketType;
