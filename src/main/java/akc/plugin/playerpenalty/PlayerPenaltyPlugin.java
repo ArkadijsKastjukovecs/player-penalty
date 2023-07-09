@@ -4,9 +4,16 @@ import akc.plugin.playerpenalty.commands.AbstractCommand;
 import akc.plugin.playerpenalty.commands.CreateIssueCommand;
 import akc.plugin.playerpenalty.commands.ForgiveCommand;
 import akc.plugin.playerpenalty.commands.PayFineCommand;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
 import akc.plugin.playerpenalty.handlers.ScheduledTaskHandler;
-import akc.plugin.playerpenalty.manager.*;
+import akc.plugin.playerpenalty.manager.DiscordSRVManager;
+import akc.plugin.playerpenalty.manager.MainConfigManager;
+import akc.plugin.playerpenalty.manager.PlayerPointsManager;
+import akc.plugin.playerpenalty.manager.TicketManager;
+import akc.plugin.playerpenalty.manager.TransformerManager;
+import akc.plugin.playerpenalty.manager.ValidationManager;
+import akc.plugin.playerpenalty.repository.TicketDao;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
@@ -22,6 +29,7 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
     private ValidationManager validationManager;
     private TransformerManager transformerManager;
     private ScheduledTaskHandler scheduledTaskHandler;
+    private TicketDao ticketDao;
 
     @Override
     public void onEnable() {
@@ -37,11 +45,13 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         this.validationManager = new ValidationManager(this);
         this.transformerManager = new TransformerManager(this);
         this.scheduledTaskHandler = new ScheduledTaskHandler();
+        this.ticketDao = new TicketDao();
 
         // external plugins
         discordSRVManager = new DiscordSRVManager(this);
         discordSRVManager.initDiscordSrv();
         ticketManager.initTicketManager();
+        ticketDao.initTicketDao();
 
         playerPointsManager = new PlayerPointsManager(this);
         playerPointsManager.initPlayerPointsPlugin();
@@ -49,6 +59,8 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         // commands
         this.supportedCommands = populateCommands();
         commandHandler.registerCommands();
+
+        ticketDao.saveTicketToDb(new TicketEntity().setValue("value"));
     }
 
     public MainConfigManager getConfigManager() {
