@@ -1,13 +1,14 @@
 package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.config.ConfigurationFields;
+import akc.plugin.playerpenalty.config.ConfigurationField;
 import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,17 +29,17 @@ public class DiscordSRVManager {
 
     public DiscordSRVManager(PlayerPenaltyPlugin playerPenaltyPlugin) {
         this.plugin = playerPenaltyPlugin;
-        this.channelToSendMessages = plugin.getConfigManager().getConfigValue(ConfigurationFields.DISCORD_CHANNEL_NAME);
+        this.channelToSendMessages = plugin.getConfigManager().getConfigValue(ConfigurationField.DISCORD_CHANNEL_NAME);
         this.connectionRetryCount = getConnectionRetryCount();
     }
 
     public void initDiscordSrv() {
-        this.discordSRV = DiscordSRV.getPlugin();
+        this.discordSRV = JavaPlugin.getPlugin(DiscordSRV.class);
         LOGGER.debug("Getting DiscordSrv plugin");
 
-        Bukkit.getScheduler().runTask(plugin, this::obtainAccountLinkManager);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::obtainAccountLinkManager);
 
-        Bukkit.getScheduler().runTask(plugin, this::obtainChannelToSendPenalties);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::obtainChannelToSendPenalties);
     }
 
     public String getDiscordId(Player player) {
@@ -56,9 +57,9 @@ public class DiscordSRVManager {
     @NotNull
     private Integer getConnectionRetryCount() {
         return Optional.of(plugin.getConfigManager())
-                .map(mainConfigManager -> mainConfigManager.getConfigValue(ConfigurationFields.CONNECTION_RETRY_COUNT))
+                .map(mainConfigManager -> mainConfigManager.getConfigValue(ConfigurationField.CONNECTION_RETRY_COUNT))
                 .map(Integer::valueOf)
-                .orElseGet(() -> Integer.valueOf(ConfigurationFields.CONNECTION_RETRY_COUNT.getDefaultValue()));
+                .orElseGet(() -> Integer.valueOf(ConfigurationField.CONNECTION_RETRY_COUNT.getDefaultValue()));
     }
 
 

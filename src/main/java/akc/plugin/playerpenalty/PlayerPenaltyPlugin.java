@@ -7,37 +7,48 @@ import akc.plugin.playerpenalty.commands.PayFineCommand;
 import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
 import akc.plugin.playerpenalty.handlers.ScheduledTaskHandler;
+import akc.plugin.playerpenalty.manager.DatabaseConfigManager;
+import akc.plugin.playerpenalty.manager.DatabaseConnectionManager;
 import akc.plugin.playerpenalty.manager.DiscordSRVManager;
 import akc.plugin.playerpenalty.manager.MainConfigManager;
 import akc.plugin.playerpenalty.manager.PlayerPointsManager;
 import akc.plugin.playerpenalty.manager.TicketManager;
 import akc.plugin.playerpenalty.manager.TransformerManager;
 import akc.plugin.playerpenalty.manager.ValidationManager;
-import akc.plugin.playerpenalty.repository.TicketDao;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 
 public final class PlayerPenaltyPlugin extends JavaPlugin {
 
+    private final List<Class<?>> supportedEntities = createSUpportedEntities();
+
     private List<AbstractCommand> supportedCommands;
 
     private DiscordSRVManager discordSRVManager;
+
     private MainConfigManager mainConfigManager;
+    private DatabaseConfigManager databaseConfigManager;
     private PlayerPointsManager playerPointsManager;
     private TicketManager ticketManager;
     private ValidationManager validationManager;
     private TransformerManager transformerManager;
     private ScheduledTaskHandler scheduledTaskHandler;
-    private TicketDao ticketDao;
-
+    private DatabaseConnectionManager databaseConnectionManager;
     @Override
     public void onEnable() {
         // configuration
         mainConfigManager = new MainConfigManager(this);
+        databaseConfigManager = new DatabaseConfigManager(this);
 
         mainConfigManager.populateDefaultValues();
         mainConfigManager.save();
+
+        databaseConfigManager.populateDefaultValues();
+        databaseConfigManager.save();
+
+        // database migration
+//        new FlywayMigrationManager().migrate(this);
 
         // handlers
         final var commandHandler = new CommandHandler(this);
@@ -45,13 +56,13 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         this.validationManager = new ValidationManager(this);
         this.transformerManager = new TransformerManager(this);
         this.scheduledTaskHandler = new ScheduledTaskHandler();
-        this.ticketDao = new TicketDao();
+        this.databaseConnectionManager = new DatabaseConnectionManager(this);
 
         // external plugins
         discordSRVManager = new DiscordSRVManager(this);
         discordSRVManager.initDiscordSrv();
         ticketManager.initTicketManager();
-        ticketDao.initTicketDao();
+        databaseConnectionManager.initializeSessionFactory();
 
         playerPointsManager = new PlayerPointsManager(this);
         playerPointsManager.initPlayerPointsPlugin();
@@ -60,7 +71,7 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         this.supportedCommands = populateCommands();
         commandHandler.registerCommands();
 
-        ticketDao.saveTicketToDb(new TicketEntity().setValue("value"));
+        databaseConnectionManager.saveTicketToDb(new TicketEntity().setValue("value"));
     }
 
     public MainConfigManager getConfigManager() {
@@ -96,11 +107,27 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         return scheduledTaskHandler;
     }
 
+    public DatabaseConnectionManager getDatabaseConnectionManager() {
+        return databaseConnectionManager;
+    }
+
+    public DatabaseConfigManager getDatabaseConfigManager() {
+        return databaseConfigManager;
+    }
+
+    public List<Class<?>> getSupportedEntities() {
+        return supportedEntities;
+    }
+
     private List<AbstractCommand> populateCommands() {
         return List.of(
                 new CreateIssueCommand(this),
                 new PayFineCommand(this),
                 new ForgiveCommand(this)
         );
+    }
+
+    private List<Class<?>> createSUpportedEntities() {
+        return List.of(TicketEntity.class);
     }
 }

@@ -1,7 +1,7 @@
 package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.config.ConfigurationFields;
+import akc.plugin.playerpenalty.config.ConfigurationField;
 import akc.plugin.playerpenalty.domain.ArgumentType;
 import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
@@ -25,7 +25,7 @@ public class CreateIssueCommand extends AbstractCommand {
 
     public CreateIssueCommand(PlayerPenaltyPlugin plugin) {
         super(plugin, "createIssue", List.of(Player.class));
-        zoneId = plugin.getConfigManager().getConfigValue(ConfigurationFields.CURRENT_ZONE_ID);
+        zoneId = plugin.getConfigManager().getConfigValue(ConfigurationField.CURRENT_ZONE_ID);
         this.discordSRVManager = plugin.getDiscordSRVManager();
         this.scheduledTaskHandler = plugin.getScheduledTaskHandler();
     }

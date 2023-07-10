@@ -1,7 +1,7 @@
 package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.config.ConfigurationFields;
+import akc.plugin.playerpenalty.config.ConfigurationField;
 import akc.plugin.playerpenalty.domain.Ticket;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
@@ -59,11 +59,11 @@ public class DiscordMessageSender {
     private final String skinApi;
 
     public DiscordMessageSender(PlayerPenaltyPlugin plugin, TextChannel channelToSend) {
-        String timeDisplayFormat = plugin.getConfigManager().getConfigValue(ConfigurationFields.TIME_DISPLAY_FORMAT);
-        String locale = plugin.getConfigManager().getConfigValue(ConfigurationFields.LOCALE);
+        String timeDisplayFormat = plugin.getConfigManager().getConfigValue(ConfigurationField.TIME_DISPLAY_FORMAT);
+        String locale = plugin.getConfigManager().getConfigValue(ConfigurationField.LOCALE);
         this.dateTimeFormatter = DateTimeFormatter.ofPattern(timeDisplayFormat, new Locale(locale));
         this.channelToSend = channelToSend;
-        this.skinApi = plugin.getConfigManager().getConfigValue(ConfigurationFields.SKIN_API);
+        this.skinApi = plugin.getConfigManager().getConfigValue(ConfigurationField.SKIN_API);
     }
 
     public void sendMessageToDiscord(Ticket ticket) {

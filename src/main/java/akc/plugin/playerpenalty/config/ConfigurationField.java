@@ -1,6 +1,6 @@
 package akc.plugin.playerpenalty.config;
 
-public enum ConfigurationFields {
+public enum ConfigurationField {
     DISCORD_CHANNEL_NAME("penalties"),
     TIME_DISPLAY_FORMAT("EEE MMM dd HH:mm:ss yyyy"),
     CURRENT_ZONE_ID("Europe/Riga"),
@@ -10,7 +10,7 @@ public enum ConfigurationFields {
 
     private final String defaultValue;
 
-    ConfigurationFields(String defaultValue) {
+    ConfigurationField(String defaultValue) {
         this.defaultValue = defaultValue;
     }
 

@@ -1,7 +1,7 @@
 package akc.plugin.playerpenalty.commands.transformation;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.config.ConfigurationFields;
+import akc.plugin.playerpenalty.config.ConfigurationField;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,7 +16,7 @@ public class DurationTransformer implements Function<String, LocalDateTime> {
     private final String currentZone;
 
     public DurationTransformer(PlayerPenaltyPlugin plugin) {
-        this.currentZone = plugin.getConfigManager().getConfigValue(ConfigurationFields.CURRENT_ZONE_ID);
+        this.currentZone = plugin.getConfigManager().getConfigValue(ConfigurationField.CURRENT_ZONE_ID);
     }
 
     @Override

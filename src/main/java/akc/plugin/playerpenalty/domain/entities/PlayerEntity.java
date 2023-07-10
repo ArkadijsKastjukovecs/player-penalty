@@ -10,26 +10,22 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "ticket", indexes = @Index(columnList = "value1", name = "index_value"))
-public class TicketEntity {
+@Table(name = "player", indexes = @Index(columnList = "value1", name = "index_value"))
+public class PlayerEntity {
     @Id
     @GeneratedValue
     private Long id;
 
-    @Column("source_ticket")
-    private TicketEntity sourceTicket;
+
+    private PlayerEntity sourceTicket;
 
     @Enumerated(EnumType.STRING)
     @Column("ticket_type")
     private TicketType ticketType;
 
-    @Column("target_player")
-    @ManyToOne(targetEntity = PlayerEntity.class)
-    private PlayerEntity targetPlayer;
 
     public void setId(Long id) {
         this.id = id;
@@ -43,7 +39,7 @@ public class TicketEntity {
         return value;
     }
 
-    public TicketEntity setValue(String value) {
+    public PlayerEntity setValue(String value) {
         this.value = value;
         return this;
     }
