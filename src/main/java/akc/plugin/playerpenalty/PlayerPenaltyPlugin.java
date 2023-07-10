@@ -4,6 +4,7 @@ import akc.plugin.playerpenalty.commands.AbstractCommand;
 import akc.plugin.playerpenalty.commands.CreateIssueCommand;
 import akc.plugin.playerpenalty.commands.ForgiveCommand;
 import akc.plugin.playerpenalty.commands.PayFineCommand;
+import akc.plugin.playerpenalty.domain.entities.PlayerEntity;
 import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
 import akc.plugin.playerpenalty.handlers.ScheduledTaskHandler;
@@ -21,7 +22,7 @@ import java.util.List;
 
 public final class PlayerPenaltyPlugin extends JavaPlugin {
 
-    private final List<Class<?>> supportedEntities = createSUpportedEntities();
+    private final List<Class<?>> supportedEntities = createSupportedEntities();
 
     private List<AbstractCommand> supportedCommands;
 
@@ -35,6 +36,7 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
     private TransformerManager transformerManager;
     private ScheduledTaskHandler scheduledTaskHandler;
     private DatabaseConnectionManager databaseConnectionManager;
+
     @Override
     public void onEnable() {
         // configuration
@@ -71,7 +73,7 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         this.supportedCommands = populateCommands();
         commandHandler.registerCommands();
 
-        databaseConnectionManager.saveTicketToDb(new TicketEntity().setValue("value"));
+//        databaseConnectionManager.saveTicketToDb(new TicketEntity().setValue("value"));
     }
 
     public MainConfigManager getConfigManager() {
@@ -127,7 +129,10 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         );
     }
 
-    private List<Class<?>> createSUpportedEntities() {
-        return List.of(TicketEntity.class);
+    private List<Class<?>> createSupportedEntities() {
+        return List.of(
+                TicketEntity.class,
+                PlayerEntity.class
+        );
     }
 }

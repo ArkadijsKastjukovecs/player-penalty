@@ -1,46 +1,65 @@
 package akc.plugin.playerpenalty.domain.entities;
 
 
-import akc.plugin.playerpenalty.domain.TicketType;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.util.List;
 
 @Entity
-@Table(name = "player", indexes = @Index(columnList = "value1", name = "index_value"))
+@Table(name = "player", indexes = @Index(columnList = "player_unique_id", name = "index_player_unique_id"))
 public class PlayerEntity {
     @Id
     @GeneratedValue
     private Long id;
 
+    @Column(name = "player_unique_id")
+    private String playerUUID;
 
-    private PlayerEntity sourceTicket;
+    @Column(name = "player_discord_id")
+    private String playerDiscordId;
 
-    @Enumerated(EnumType.STRING)
-    @Column("ticket_type")
-    private TicketType ticketType;
+    @OneToMany(mappedBy = "targetPlayer")
+    private List<TicketEntity> sourceTicket;
 
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Long getId() {
         return id;
     }
 
-    public String getValue() {
-        return value;
+    public PlayerEntity setId(Long id) {
+        this.id = id;
+        return this;
     }
 
-    public PlayerEntity setValue(String value) {
-        this.value = value;
+    public String getPlayerUUID() {
+        return playerUUID;
+    }
+
+    public PlayerEntity setPlayerUUID(String playerUUID) {
+        this.playerUUID = playerUUID;
+        return this;
+    }
+
+    public String getPlayerDiscordId() {
+        return playerDiscordId;
+    }
+
+    public PlayerEntity setPlayerDiscordId(String playerDiscordId) {
+        this.playerDiscordId = playerDiscordId;
+        return this;
+    }
+
+    public List<TicketEntity> getSourceTicket() {
+        return sourceTicket;
+    }
+
+    public PlayerEntity setSourceTicket(List<TicketEntity> sourceTicket) {
+        this.sourceTicket = sourceTicket;
         return this;
     }
 }
