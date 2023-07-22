@@ -8,6 +8,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
+import org.flywaydb.database.mysql.MySQLDatabaseType;
 
 public class FlywayMigrationManager {
 
@@ -43,6 +44,7 @@ public class FlywayMigrationManager {
         final var databaseUrlFromConfig = DatabaseUrlUtil.getDatabaseUrlFromConfig(databaseConfigManager);
         final var userName = databaseConfigManager.getConfigValue(DatabaseConfigurationField.DATABASE_CONNECTION_USER_NAME);
         final var password = databaseConfigManager.getConfigValue(DatabaseConfigurationField.DATABASE_CONNECTION_PASSWORD);
+        final var mySQLDatabaseType = new MySQLDatabaseType();
 
         final var hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(databaseUrlFromConfig);

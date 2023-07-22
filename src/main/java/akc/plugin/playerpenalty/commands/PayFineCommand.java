@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class PayFineCommand extends AbstractCommand {
 
@@ -29,7 +30,7 @@ public class PayFineCommand extends AbstractCommand {
         final var originalTicket = newTicket.getSourceTicket();
 
         final var pointsAPI = playerPointsManager.getPointsAPI();
-        final var ticketPaid = pointsAPI.pay(newTicket.getTargetPlayer().getPlayerId(), newTicket.getVictim().getPlayerId(), newTicket.getPenaltyAmount());
+        final var ticketPaid = pointsAPI.pay(UUID.fromString(newTicket.getTargetPlayer().getPlayerId()), UUID.fromString(newTicket.getVictim().getPlayerId()), newTicket.getPenaltyAmount());
 
         if (ticketPaid) {
 

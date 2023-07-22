@@ -65,7 +65,7 @@ public class CreateIssueCommand extends AbstractCommand {
     private void scheduleRepeatTask(TicketEntity ticket) {
         final var secondsToDeadline = ChronoUnit.SECONDS.between(LocalDateTime.now(ZoneId.of(zoneId)), ticket.getSchedule().getDeadline());
         final var doubledTicket = new TicketEntity();
-        final var bukkitTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        final var bukkitTask = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
                     ticket.copyTo(doubledTicket);
                     ticket.setShouldBePaid(false);
                     doubledTicket.setPenaltyAmount(ticket.getPenaltyAmount() * 2)

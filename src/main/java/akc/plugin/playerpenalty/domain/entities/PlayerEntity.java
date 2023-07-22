@@ -1,17 +1,9 @@
 package akc.plugin.playerpenalty.domain.entities;
 
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "player")
@@ -22,7 +14,7 @@ public class PlayerEntity {
     private Integer id;
 
     @Column(name = "player_id")
-    private UUID playerId;
+    private String playerId;
 
     @Column(name = "player_discord_id")
     private String playerDiscordId;
@@ -31,13 +23,13 @@ public class PlayerEntity {
     private String playerName;
 
     @OneToMany(mappedBy = "targetPlayer", fetch = FetchType.EAGER)
-    private List<TicketEntity> targetTickets = new ArrayList<>();
+    private Set<TicketEntity> targetTickets = new HashSet<>();
 
     @OneToMany(mappedBy = "policePlayer", fetch = FetchType.EAGER)
-    private List<TicketEntity> policeTickets = new ArrayList<>();
+    private Set<TicketEntity> policeTickets = new HashSet<>();
 
     @OneToMany(mappedBy = "victim", fetch = FetchType.EAGER)
-    private List<TicketEntity> victimTickets = new ArrayList<>();
+    private Set<TicketEntity> victimTickets = new HashSet<>();
 
     public Integer getId() {
         return id;
@@ -48,11 +40,11 @@ public class PlayerEntity {
         return this;
     }
 
-    public UUID getPlayerId() {
+    public String getPlayerId() {
         return playerId;
     }
 
-    public PlayerEntity setPlayerId(UUID playerId) {
+    public PlayerEntity setPlayerId(String playerId) {
         this.playerId = playerId;
         return this;
     }
@@ -66,29 +58,29 @@ public class PlayerEntity {
         return this;
     }
 
-    public List<TicketEntity> getTargetTickets() {
+    public Set<TicketEntity> getTargetTickets() {
         return targetTickets;
     }
 
-    public PlayerEntity setTargetTickets(List<TicketEntity> targetTickets) {
+    public PlayerEntity setTargetTickets(Set<TicketEntity> targetTickets) {
         this.targetTickets = targetTickets;
         return this;
     }
 
-    public List<TicketEntity> getPoliceTickets() {
+    public Set<TicketEntity> getPoliceTickets() {
         return policeTickets;
     }
 
-    public PlayerEntity setPoliceTickets(List<TicketEntity> policeTickets) {
+    public PlayerEntity setPoliceTickets(Set<TicketEntity> policeTickets) {
         this.policeTickets = policeTickets;
         return this;
     }
 
-    public List<TicketEntity> getVictimTickets() {
+    public Set<TicketEntity> getVictimTickets() {
         return victimTickets;
     }
 
-    public PlayerEntity setVictimTickets(List<TicketEntity> victimTickets) {
+    public PlayerEntity setVictimTickets(Set<TicketEntity> victimTickets) {
         this.victimTickets = victimTickets;
         return this;
     }

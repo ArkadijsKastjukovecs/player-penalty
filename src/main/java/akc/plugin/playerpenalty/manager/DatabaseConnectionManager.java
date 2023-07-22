@@ -44,7 +44,6 @@ public class DatabaseConnectionManager {
             prop.setProperty("hibernate.connection.autocommit", "true");
 //            prop.setProperty("hibernate.hbm2ddl.auto", "create");
 
-
             final var hibernateConfiguration = new Configuration()
                     .addProperties(prop)
                     .addPackage("akc.plugin.playerpenalty.domain.entities.");

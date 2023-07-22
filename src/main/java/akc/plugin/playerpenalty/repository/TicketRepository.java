@@ -93,7 +93,7 @@ public class TicketRepository {
 
     private PlayerEntity getPlayerNullsafe(Player player, Session session) {
         final var query = session.createQuery("SELECT p FROM akc.plugin.playerpenalty.domain.entities.PlayerEntity p where p.playerId = :id", PlayerEntity.class);
-        query.setParameter("id", player.getUniqueId());
+        query.setParameter("id", player.getUniqueId().toString());
         return query.getResultList().stream()
                 .findFirst()
                 .orElseGet(createNewPlayer(player, session));
@@ -103,7 +103,7 @@ public class TicketRepository {
         return () -> {
             final var discordId = discordSRVManager.getDiscordId(player);
             final var playerEntity = new PlayerEntity()
-                    .setPlayerId(player.getUniqueId())
+                    .setPlayerId(player.getUniqueId().toString())
                     .setPlayerDiscordId(discordId)
                     .setPlayerName(player.getName());
             session.save(playerEntity);
