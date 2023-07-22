@@ -1,7 +1,7 @@
 package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.domain.ArgumentType;
-import akc.plugin.playerpenalty.domain.Ticket;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -15,12 +15,11 @@ public class SubCommand<T> {
     private final String commandValue;
     private final ArgumentType argumentType;
     private final List<SubCommand<?>> subCommands;
-    private final BiFunction<Ticket, T, Ticket> buildAppender;
+    private final BiFunction<TicketEntity, T, TicketEntity> buildAppender;
     private final Predicate<T> validationFunction;
     private final Function<String, T> valueTransformer;
     private final BiFunction<String, Player, T> playerValueTransformer;
     private final Function<Player, List<String>> customSuggestionProvider;
-    private final boolean required;
 
     private SubCommand(Builder<T> b) {
         commandValue = b.commandValue;
@@ -31,7 +30,6 @@ public class SubCommand<T> {
         valueTransformer = b.valueTransformer;
         playerValueTransformer = b.playerValueTransformer;
         customSuggestionProvider = b.customSuggestionProvider;
-        required = b.required;
     }
 
     public String getCommandValue() {
@@ -46,7 +44,7 @@ public class SubCommand<T> {
         return subCommands;
     }
 
-    public BiFunction<Ticket, T, Ticket> getBuildAppender() {
+    public BiFunction<TicketEntity, T, TicketEntity> getBuildAppender() {
         return buildAppender;
     }
 
@@ -74,13 +72,11 @@ public class SubCommand<T> {
         private String commandValue;
         private ArgumentType argumentType;
         private List<SubCommand<?>> subCommands = new ArrayList<>();
-        private BiFunction<Ticket, T, Ticket> buildAppender;
+        private BiFunction<TicketEntity, T, TicketEntity> buildAppender;
         private Predicate<T> validationFunction;
         private Function<String, T> valueTransformer;
         private BiFunction<String, Player, T> playerValueTransformer;
         private Function<Player, List<String>> customSuggestionProvider;
-        private boolean required = false;
-
 
         private Builder() {
         }
@@ -100,12 +96,7 @@ public class SubCommand<T> {
             return this;
         }
 
-        public Builder<T> required(boolean required) {
-            this.required = required;
-            return this;
-        }
-
-        public Builder<T> buildAppender(BiFunction<Ticket, T, Ticket> buildAppender) {
+        public Builder<T> buildAppender(BiFunction<TicketEntity, T, TicketEntity> buildAppender) {
             this.buildAppender = buildAppender;
             return this;
         }

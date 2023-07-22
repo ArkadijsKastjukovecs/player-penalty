@@ -2,15 +2,13 @@ package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.config.ConfigurationField;
-import akc.plugin.playerpenalty.domain.Ticket;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
-import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Locale;
 
 public class DiscordMessageSender {
@@ -41,7 +39,7 @@ public class DiscordMessageSender {
             """;
 
     private static final String DOUBLE_ISSUE_FIELD_NAME_TEMPLATE = """
-            :receipt: Игрок %s просрочил свой штраф %s, резмер текущего штрафа под номером %s составляет %s AP!
+            :receipt: Игрок %s просрочил свой штраф %s, размер текущего штрафа под номером %s составляет %s AP!
             """;
     private static final String DOUBLE_ISSUE_FIELD_VALUE_TEMPLATE = """
                         
@@ -66,7 +64,7 @@ public class DiscordMessageSender {
         this.skinApi = plugin.getConfigManager().getConfigValue(ConfigurationField.SKIN_API);
     }
 
-    public void sendMessageToDiscord(Ticket ticket) {
+    public void sendMessageToDiscord(TicketEntity ticket) {
 
         switch (ticket.getTicketType()) {
             case ISSUE -> sendIssueTicket(ticket);
@@ -76,75 +74,72 @@ public class DiscordMessageSender {
         }
     }
 
-    private void sendPardonTicket(Ticket ticket) {
-        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
-                message.editMessageEmbeds(List.of(createPayFineEmbed(ticket, message))).queue());
+    private void sendPardonTicket(TicketEntity ticket) {
+        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayer().getPlayerDiscordId()))
+                .setEmbeds(createPayFineEmbed(ticket)).queue();
     }
 
-    private void sendIssueTicket(Ticket ticket) {
-        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
-                message.editMessageEmbeds(List.of(createIssueEmbed(ticket, message))).queue());
+    private void sendIssueTicket(TicketEntity ticket) {
+        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayer().getPlayerDiscordId()))
+                .setEmbeds(createIssueEmbed(ticket)).queue();
     }
 
-    private void sendForgiveTicket(Ticket ticket) {
-        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
-                message.editMessageEmbeds(List.of(createForgiveEmbed(ticket, message))).queue());
+    private void sendForgiveTicket(TicketEntity ticket) {
+        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayer().getPlayerDiscordId()))
+                .setEmbeds(createForgiveEmbed(ticket)).queue();
     }
 
-    private void sendDoubleIssueTicket(Ticket ticket) {
-        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayerDiscordId())).queue(message ->
-                message.editMessageEmbeds(List.of(createDoubleIssueEmbed(ticket, message))).queue());
+    private void sendDoubleIssueTicket(TicketEntity ticket) {
+        channelToSend.sendMessage(USER_MENTION_TEMPLATE.formatted(ticket.getTargetPlayer().getPlayerDiscordId()))
+                .setEmbeds(createDoubleIssueEmbed(ticket)).queue();
     }
 
-    private MessageEmbed createIssueEmbed(Ticket ticket, Message message) {
-        final var formattedDate = ticket.getDeadline().atOffset(ZoneOffset.UTC).format(dateTimeFormatter);
-        ticket.setTicketNumber(message.getId());
+    private MessageEmbed createIssueEmbed(TicketEntity ticket) {
+        final var formattedDate = ticket.getSchedule().getDeadline().atOffset(ZoneOffset.UTC).format(dateTimeFormatter);
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getPlayerId()))
                 .addField(
-                        ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getName(), message.getId(), ticket.getPenaltyAmount()),
-                        ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), formattedDate),
+                        ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getPlayerName(), ticket.getId(), ticket.getPenaltyAmount()),
+                        ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getPlayerName(), ticket.getVictim().getPlayerName(), ticket.getReason(), formattedDate),
                         false)
                 .build();
     }
 
-    private MessageEmbed createPayFineEmbed(Ticket ticket, Message message) {
-        final var originalTicketNumber = ticket.getTicketNumber();
-        ticket.setTicketNumber(message.getId());
+    private MessageEmbed createPayFineEmbed(TicketEntity ticket) {
+        final var originalTicketNumber = ticket.getSourceTicket().getId();
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getPlayerId()))
                 .addField(
-                        PAY_FINE_FIELD_NAME_TEMPLATE.formatted(originalTicketNumber, ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
+                        PAY_FINE_FIELD_NAME_TEMPLATE.formatted(originalTicketNumber, ticket.getTargetPlayer().getPlayerName(), ticket.getVictim().getPlayerName()),
                         PAY_FINE_FIELD_VALUE_TEMPLATE,
                         false)
                 .build();
     }
 
-    private MessageEmbed createForgiveEmbed(Ticket ticket, Message message) {
-        final var originalTicketNumber = ticket.getTicketNumber();
-        ticket.setTicketNumber(message.getId());
+    private MessageEmbed createForgiveEmbed(TicketEntity ticket) {
+        final var originalTicketNumber = ticket.getSourceTicket().getId();
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getPlayerId()))
                 .addField(
-                        FORGIVE_FIELD_NAME_TEMPLATE.formatted(originalTicketNumber, ticket.getTargetPlayer().getName(), ticket.getVictim().getName()),
+                        FORGIVE_FIELD_NAME_TEMPLATE.formatted(originalTicketNumber, ticket.getTargetPlayer().getPlayerName(), ticket.getVictim().getPlayerName()),
                         PAY_FINE_FIELD_VALUE_TEMPLATE,
                         false)
                 .build();
     }
 
-    private MessageEmbed createDoubleIssueEmbed(Ticket ticket, Message message) {
-        final var originalTicketNumber = ticket.getTicketNumber();
-        final var formattedDate = ticket.getDeadline().atOffset(ZoneOffset.UTC).format(dateTimeFormatter);
-        ticket.setTicketNumber(message.getId());
+    private MessageEmbed createDoubleIssueEmbed(TicketEntity ticket) {
+        final var originalTicket = ticket.getSourceTicket();
+        final var originalTicketNumber = originalTicket.getId();
+        final var formattedDate = originalTicket.getSchedule().getDeadline().atOffset(ZoneOffset.UTC).format(dateTimeFormatter);
         return new EmbedBuilder()
                 .setColor(ticket.getTicketType().getTicketColor())
-                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getUniqueId()))
+                .setThumbnail(skinApi.formatted(ticket.getTargetPlayer().getPlayerId()))
                 .addField(
-                        DOUBLE_ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getName(), originalTicketNumber, message.getId(), ticket.getPenaltyAmount()),
-                        DOUBLE_ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getName(), ticket.getVictim().getName(), ticket.getReason(), formattedDate),
+                        DOUBLE_ISSUE_FIELD_NAME_TEMPLATE.formatted(ticket.getTargetPlayer().getPlayerName(), originalTicketNumber, ticket.getId(), ticket.getPenaltyAmount()),
+                        DOUBLE_ISSUE_FIELD_VALUE_TEMPLATE.formatted(ticket.getPolicePlayer().getPlayerName(), ticket.getVictim().getPlayerName(), ticket.getReason(), formattedDate),
                         false)
                 .build();
     }

@@ -2,7 +2,7 @@ package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.config.ConfigurationField;
-import akc.plugin.playerpenalty.domain.Ticket;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
@@ -46,7 +46,7 @@ public class DiscordSRVManager {
         return accountLinkManager.getDiscordId(player.getUniqueId());
     }
 
-    public void sendMEssageToDiscord(Ticket ticket) {
+    public void sendMEssageToDiscord(TicketEntity ticket) {
         discordMessageSender.sendMessageToDiscord(ticket);
     }
 

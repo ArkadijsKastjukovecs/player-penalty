@@ -41,7 +41,8 @@ public class DatabaseConnectionManager {
             prop.setProperty("hibernate.show_sql", showSql);
             prop.setProperty("hibernate.format_sql", "true");
             prop.setProperty("connection.provider_class", "com.zaxxer.hikari.hibernate.HikariConnectionProvider");
-            prop.setProperty("hibernate.hbm2ddl.auto", "create");
+            prop.setProperty("hibernate.connection.autocommit", "true");
+//            prop.setProperty("hibernate.hbm2ddl.auto", "create");
 
 
             final var hibernateConfiguration = new Configuration()

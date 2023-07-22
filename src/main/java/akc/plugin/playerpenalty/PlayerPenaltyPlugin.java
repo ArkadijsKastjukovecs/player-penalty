@@ -5,17 +5,18 @@ import akc.plugin.playerpenalty.commands.CreateIssueCommand;
 import akc.plugin.playerpenalty.commands.ForgiveCommand;
 import akc.plugin.playerpenalty.commands.PayFineCommand;
 import akc.plugin.playerpenalty.domain.entities.PlayerEntity;
+import akc.plugin.playerpenalty.domain.entities.ScheduledEntity;
 import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
-import akc.plugin.playerpenalty.handlers.ScheduledTaskHandler;
 import akc.plugin.playerpenalty.manager.DatabaseConfigManager;
 import akc.plugin.playerpenalty.manager.DatabaseConnectionManager;
 import akc.plugin.playerpenalty.manager.DiscordSRVManager;
+import akc.plugin.playerpenalty.manager.FlywayMigrationManager;
 import akc.plugin.playerpenalty.manager.MainConfigManager;
 import akc.plugin.playerpenalty.manager.PlayerPointsManager;
-import akc.plugin.playerpenalty.manager.TicketManager;
 import akc.plugin.playerpenalty.manager.TransformerManager;
 import akc.plugin.playerpenalty.manager.ValidationManager;
+import akc.plugin.playerpenalty.repository.TicketRepository;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
@@ -31,11 +32,10 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
     private MainConfigManager mainConfigManager;
     private DatabaseConfigManager databaseConfigManager;
     private PlayerPointsManager playerPointsManager;
-    private TicketManager ticketManager;
     private ValidationManager validationManager;
     private TransformerManager transformerManager;
-    private ScheduledTaskHandler scheduledTaskHandler;
     private DatabaseConnectionManager databaseConnectionManager;
+    private TicketRepository ticketRepository;
 
     @Override
     public void onEnable() {
@@ -50,30 +50,30 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         databaseConfigManager.save();
 
         // database migration
-//        new FlywayMigrationManager().migrate(this);
+        new FlywayMigrationManager().migrate(this);
 
         // handlers
         final var commandHandler = new CommandHandler(this);
-        this.ticketManager = new TicketManager(this);
-        this.validationManager = new ValidationManager(this);
-        this.transformerManager = new TransformerManager(this);
-        this.scheduledTaskHandler = new ScheduledTaskHandler();
         this.databaseConnectionManager = new DatabaseConnectionManager(this);
 
         // external plugins
         discordSRVManager = new DiscordSRVManager(this);
         discordSRVManager.initDiscordSrv();
-        ticketManager.initTicketManager();
         databaseConnectionManager.initializeSessionFactory();
 
         playerPointsManager = new PlayerPointsManager(this);
         playerPointsManager.initPlayerPointsPlugin();
 
+        // database
+        ticketRepository = new TicketRepository(this);
+
+        // command handling
+        this.validationManager = new ValidationManager();
+        this.transformerManager = new TransformerManager(this);
+
         // commands
         this.supportedCommands = populateCommands();
         commandHandler.registerCommands();
-
-//        databaseConnectionManager.saveTicketToDb(new TicketEntity().setValue("value"));
     }
 
     public MainConfigManager getConfigManager() {
@@ -93,9 +93,6 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         return playerPointsManager;
     }
 
-    public TicketManager getTicketManager() {
-        return ticketManager;
-    }
 
     public ValidationManager getValidationManager() {
         return validationManager;
@@ -103,10 +100,6 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
 
     public TransformerManager getTransformerManager() {
         return transformerManager;
-    }
-
-    public ScheduledTaskHandler getScheduledTaskHandler() {
-        return scheduledTaskHandler;
     }
 
     public DatabaseConnectionManager getDatabaseConnectionManager() {
@@ -121,6 +114,10 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         return supportedEntities;
     }
 
+    public TicketRepository getTicketRepository() {
+        return ticketRepository;
+    }
+
     private List<AbstractCommand> populateCommands() {
         return List.of(
                 new CreateIssueCommand(this),
@@ -132,7 +129,8 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
     private List<Class<?>> createSupportedEntities() {
         return List.of(
                 TicketEntity.class,
-                PlayerEntity.class
+                PlayerEntity.class,
+                ScheduledEntity.class
         );
     }
 }

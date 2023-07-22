@@ -3,45 +3,57 @@ package akc.plugin.playerpenalty.domain.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Index;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
-@Table(name = "player", indexes = @Index(columnList = "player_unique_id", name = "index_player_unique_id"))
+@Table(name = "player")
 public class PlayerEntity {
-    @Id
-    @GeneratedValue
-    private Long id;
 
-    @Column(name = "player_unique_id")
-    private String playerUUID;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "player_id")
+    private UUID playerId;
 
     @Column(name = "player_discord_id")
     private String playerDiscordId;
 
-    @OneToMany(mappedBy = "targetPlayer")
-    private List<TicketEntity> sourceTicket;
+    @Column(name = "player_name")
+    private String playerName;
 
+    @OneToMany(mappedBy = "targetPlayer", fetch = FetchType.EAGER)
+    private List<TicketEntity> targetTickets = new ArrayList<>();
 
-    public Long getId() {
+    @OneToMany(mappedBy = "policePlayer", fetch = FetchType.EAGER)
+    private List<TicketEntity> policeTickets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "victim", fetch = FetchType.EAGER)
+    private List<TicketEntity> victimTickets = new ArrayList<>();
+
+    public Integer getId() {
         return id;
     }
 
-    public PlayerEntity setId(Long id) {
+    public PlayerEntity setId(Integer id) {
         this.id = id;
         return this;
     }
 
-    public String getPlayerUUID() {
-        return playerUUID;
+    public UUID getPlayerId() {
+        return playerId;
     }
 
-    public PlayerEntity setPlayerUUID(String playerUUID) {
-        this.playerUUID = playerUUID;
+    public PlayerEntity setPlayerId(UUID playerId) {
+        this.playerId = playerId;
         return this;
     }
 
@@ -54,12 +66,39 @@ public class PlayerEntity {
         return this;
     }
 
-    public List<TicketEntity> getSourceTicket() {
-        return sourceTicket;
+    public List<TicketEntity> getTargetTickets() {
+        return targetTickets;
     }
 
-    public PlayerEntity setSourceTicket(List<TicketEntity> sourceTicket) {
-        this.sourceTicket = sourceTicket;
+    public PlayerEntity setTargetTickets(List<TicketEntity> targetTickets) {
+        this.targetTickets = targetTickets;
+        return this;
+    }
+
+    public List<TicketEntity> getPoliceTickets() {
+        return policeTickets;
+    }
+
+    public PlayerEntity setPoliceTickets(List<TicketEntity> policeTickets) {
+        this.policeTickets = policeTickets;
+        return this;
+    }
+
+    public List<TicketEntity> getVictimTickets() {
+        return victimTickets;
+    }
+
+    public PlayerEntity setVictimTickets(List<TicketEntity> victimTickets) {
+        this.victimTickets = victimTickets;
+        return this;
+    }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public PlayerEntity setPlayerName(String playerName) {
+        this.playerName = playerName;
         return this;
     }
 }

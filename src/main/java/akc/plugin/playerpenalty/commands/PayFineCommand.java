@@ -2,16 +2,16 @@ package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.domain.ArgumentType;
-import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.manager.PlayerPointsManager;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-
-import static java.util.function.Predicate.not;
+import java.util.Optional;
 
 public class PayFineCommand extends AbstractCommand {
 
@@ -23,24 +23,24 @@ public class PayFineCommand extends AbstractCommand {
     }
 
     @Override
-    protected boolean handleCommand(CommandSender sender, Ticket newTicket, String[] args) {
-        newTicket.setTicketType(TicketType.PARDON);
-
-        final var originalTicket = ticketManager.findOriginalTicket(newTicket.getTicketNumber());
+    protected boolean handleCommand(CommandSender sender, TicketEntity newTicket, String[] args) {
+        newTicket.setTicketType(TicketType.PARDON)
+                .setShouldBePaid(false);
+        final var originalTicket = newTicket.getSourceTicket();
 
         final var pointsAPI = playerPointsManager.getPointsAPI();
-        final var ticketPaid = pointsAPI.pay(newTicket.getTargetPlayer().getUniqueId(), newTicket.getVictim().getUniqueId(), newTicket.getPenaltyAmount());
+        final var ticketPaid = pointsAPI.pay(newTicket.getTargetPlayer().getPlayerId(), newTicket.getVictim().getPlayerId(), newTicket.getPenaltyAmount());
 
         if (ticketPaid) {
-            originalTicket.setResolved(true);
-            newTicket.setResolved(true);
+
+            cancelSchedule(originalTicket);
+            originalTicket.setShouldBePaid(false);
+            ticketRepository.saveNewTicket(newTicket);
             plugin.getDiscordSRVManager().sendMEssageToDiscord(newTicket);
-            ticketManager.addTicketToPlayer(newTicket.getTargetPlayer(), newTicket);
-            ticketManager.save(originalTicket);
-            plugin.getScheduledTaskHandler().cancelTask(originalTicket);
-            sender.sendMessage("Штраф под номером %s успешно оплачен".formatted(newTicket.getTicketNumber()));
+            ticketRepository.updateExistingTicket(originalTicket);
+            sender.sendMessage("Штраф под номером %s успешно оплачен".formatted(originalTicket.getId()));
         } else {
-            sender.sendMessage("Произошла ошибка оплаты штрафа под номером %s".formatted(newTicket.getTicketNumber()));
+            sender.sendMessage("Произошла ошибка оплаты штрафа под номером %s".formatted(originalTicket.getId()));
         }
 
         return true;
@@ -51,23 +51,31 @@ public class PayFineCommand extends AbstractCommand {
         return List.of(createSubCommand());
     }
 
+    private void cancelSchedule(TicketEntity originalTicket) {
+        Optional.ofNullable(originalTicket.getSchedule())
+                .ifPresent(schedule -> {
+                    schedule.setActive(false);
+                    Bukkit.getScheduler().cancelTask(schedule.getBukkitTaskId());
+                });
+    }
+
     private SubCommand<?> createSubCommand() {
-        return SubCommand.<Ticket>builder()
+        return SubCommand.<TicketEntity>builder()
                 .commandValue("Номер_тикета")
                 .argumentType(ArgumentType.TICKET_NUMBER)
                 .buildAppender((emptyTicket, foundTicket) -> foundTicket.copyTo(emptyTicket))
                 .validationFunction(validationManager.getTicketNumberValidationFunction())
                 .playerValueTransformer(transformerManager.getTargetPlayerTicketNumberTransformer())
                 .customSuggestionProvider(this::getOpenTickets)
-                .required(true)
                 .build();
     }
 
     @NotNull
     private List<String> getOpenTickets(Player player) {
-        return ticketManager.findOpenIssues(player).stream()
-                .filter(not(Ticket::isResolved))
-                .map(Ticket::getTicketNumber)
+        return ticketRepository.findOpenIssues(player).stream()
+                .filter(TicketEntity::getShouldBePaid)
+                .map(TicketEntity::getId)
+                .map(String::valueOf)
                 .toList();
     }
 }

@@ -1,24 +1,24 @@
 package akc.plugin.playerpenalty.commands.transformation;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.domain.Ticket;
-import akc.plugin.playerpenalty.manager.TicketManager;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
+import akc.plugin.playerpenalty.repository.TicketRepository;
 import org.bukkit.entity.Player;
 
 import java.util.function.BiFunction;
 
-public class VictimTicketNumberTransformer implements BiFunction<String, Player, Ticket> {
+public class VictimTicketNumberTransformer implements BiFunction<String, Player, TicketEntity> {
 
-    private final TicketManager ticketManager;
+    private final TicketRepository ticketManager;
 
     public VictimTicketNumberTransformer(PlayerPenaltyPlugin plugin) {
-        this.ticketManager = plugin.getTicketManager();
+        this.ticketManager = plugin.getTicketRepository();
     }
 
     @Override
-    public Ticket apply(String ticketNumber, Player player) {
-        return ticketManager.findOpenIssueByVictim(player).stream()
-                .filter(ticket -> ticket.getTicketNumber().equals(ticketNumber))
+    public TicketEntity apply(String ticketNumber, Player player) {
+        return ticketManager.findOpenVictimTickets(player).stream()
+                .filter(ticket -> ticket.getId().equals(Integer.valueOf(ticketNumber)))
                 .findAny()
                 .orElse(null);
     }

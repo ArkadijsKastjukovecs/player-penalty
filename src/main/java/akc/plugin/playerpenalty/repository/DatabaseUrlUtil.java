@@ -49,12 +49,12 @@ public class DatabaseUrlUtil {
         final var databasePort = databaseConfigManager.getConfigValue(DatabaseConfigurationField.DB_PORT);
         final var databaseSchema = databaseConfigManager.getConfigValue(DatabaseConfigurationField.SCHEMA_NAME);
         return stringBuilder.append("jdbc:mysql:")
-                .append(SEPARATOR)
-                .append(SEPARATOR)
+                .append("//")
+//                .append(SEPARATOR)
                 .append(databaseIP)
                 .append(":")
                 .append(databasePort)
-                .append(SEPARATOR)
+                .append("/")
                 .append(databaseSchema)
                 .toString();
     }

@@ -2,10 +2,10 @@ package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.domain.ArgumentType;
-import akc.plugin.playerpenalty.domain.Ticket;
-import akc.plugin.playerpenalty.manager.TicketManager;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.manager.TransformerManager;
 import akc.plugin.playerpenalty.manager.ValidationManager;
+import akc.plugin.playerpenalty.repository.TicketRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -14,7 +14,11 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"java:S3740", "unchecked"})
@@ -24,7 +28,7 @@ public abstract class AbstractCommand implements TabExecutor {
     private static final List<String> NUMBER_SUGGESTIONS = List.of("1", "10", "100", "1000");
     private final List<SubCommand<?>> subCommands = new ArrayList<>();
     protected final PlayerPenaltyPlugin plugin;
-    protected final TicketManager ticketManager;
+    protected final TicketRepository ticketRepository;
     protected final ValidationManager validationManager;
     protected final TransformerManager transformerManager;
 
@@ -34,7 +38,7 @@ public abstract class AbstractCommand implements TabExecutor {
     protected AbstractCommand(PlayerPenaltyPlugin plugin, String commandName, List<Class<?>> allowedSenders) {
         this.plugin = plugin;
         this.commandName = commandName;
-        this.ticketManager = plugin.getTicketManager();
+        this.ticketRepository = plugin.getTicketRepository();
         this.validationManager = plugin.getValidationManager();
         this.transformerManager = plugin.getTransformerManager();
         this.allowedSenders = allowedSenders;
@@ -44,7 +48,7 @@ public abstract class AbstractCommand implements TabExecutor {
     @SuppressWarnings("java:S1452")
     protected abstract List<SubCommand<?>> createSubCommands();
 
-    protected abstract boolean handleCommand(CommandSender sender, Ticket ticketBuilder, String[] args);
+    protected abstract boolean handleCommand(CommandSender sender, TicketEntity ticketBuilder, String[] args);
 
     public String getCommandName() {
         return commandName;
@@ -56,10 +60,11 @@ public abstract class AbstractCommand implements TabExecutor {
                 .anyMatch(it -> it.isInstance(sender));
         if (!isSenderAllowed) {
             sender.sendMessage("эту комманду нельзя использовать через " + sender.getName());
+            return true;
         }
 
         final var combinedStringArgs = combineStringArgs(args);
-        final var ticketBuilder = new Ticket();
+        final var ticketBuilder = new TicketEntity();
         final var requestIsValid = validateAndBuild(subCommands.stream().map(SubCommand.class::cast).toList(), combinedStringArgs, ticketBuilder, 0, sender);
         if (!requestIsValid) {
             return true;
@@ -68,7 +73,7 @@ public abstract class AbstractCommand implements TabExecutor {
         return handleCommand(sender, ticketBuilder, combinedStringArgs);
     }
 
-    private boolean validateAndBuild(List<SubCommand> commands, String[] args, Ticket ticketBuilder, int currentArg, CommandSender sender) {
+    private boolean validateAndBuild(List<SubCommand> commands, String[] args, TicketEntity ticketBuilder, int currentArg, CommandSender sender) {
         if (commands.isEmpty()) {
             return true;
         }

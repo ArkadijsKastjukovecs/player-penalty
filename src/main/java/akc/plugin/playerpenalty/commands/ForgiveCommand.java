@@ -2,14 +2,14 @@ package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.domain.ArgumentType;
-import akc.plugin.playerpenalty.domain.Ticket;
 import akc.plugin.playerpenalty.domain.TicketType;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-
-import static java.util.function.Predicate.not;
+import java.util.Optional;
 
 public class ForgiveCommand extends AbstractCommand {
 
@@ -18,20 +18,28 @@ public class ForgiveCommand extends AbstractCommand {
     }
 
     @Override
-    protected boolean handleCommand(CommandSender sender, Ticket newTicket, String[] args) {
-        newTicket.setTicketType(TicketType.FORGIVE);
+    protected boolean handleCommand(CommandSender sender, TicketEntity newTicket, String[] args) {
+        newTicket.setTicketType(TicketType.FORGIVE)
+                .setShouldBePaid(false);
 
-        final var originalTicket = ticketManager.findOriginalTicket(newTicket.getTicketNumber());
-        originalTicket.setResolved(true);
-        newTicket.setResolved(true);
+        final var originalTicket = newTicket.getSourceTicket();
+        cancelSchedule(originalTicket);
+        originalTicket.setShouldBePaid(false);
 
+        ticketRepository.saveNewTicket(newTicket);
         plugin.getDiscordSRVManager().sendMEssageToDiscord(newTicket);
-        ticketManager.addTicketToPlayer(newTicket.getTargetPlayer(), newTicket);
-        ticketManager.save(originalTicket);
-        plugin.getScheduledTaskHandler().cancelTask(originalTicket);
-        sender.sendMessage("Штраф под номером %s прощен".formatted(originalTicket.getTicketNumber()));
+        ticketRepository.updateExistingTicket(originalTicket);
+        sender.sendMessage("Штраф под номером %s прощен".formatted(originalTicket.getId()));
 
         return true;
+    }
+
+    private void cancelSchedule(TicketEntity originalTicket) {
+        Optional.ofNullable(originalTicket.getSchedule())
+                .ifPresent(schedule -> {
+                    schedule.setActive(false);
+                    Bukkit.getScheduler().cancelTask(schedule.getBukkitTaskId());
+                });
     }
 
     @Override
@@ -40,21 +48,21 @@ public class ForgiveCommand extends AbstractCommand {
     }
 
     private SubCommand<?> createSubCommand() {
-        return SubCommand.<Ticket>builder()
+        return SubCommand.<TicketEntity>builder()
                 .commandValue("Номер_тикета")
                 .argumentType(ArgumentType.TICKET_NUMBER)
                 .buildAppender((newTicket, foundTicket) -> foundTicket.copyTo(newTicket))
                 .validationFunction(validationManager.getTicketNumberValidationFunction())
                 .playerValueTransformer(transformerManager.getVictimTicketNumberTransformer())
                 .customSuggestionProvider(this::getOpenIssues)
-                .required(true)
                 .build();
     }
 
     private List<String> getOpenIssues(Player player) {
-        return ticketManager.findOpenIssueByVictim(player).stream()
-                .filter(not(Ticket::isResolved))
-                .map(Ticket::getTicketNumber)
+        return ticketRepository.findOpenVictimTickets(player).stream()
+                .filter(TicketEntity::getShouldBePaid)
+                .map(TicketEntity::getId)
+                .map(String::valueOf)
                 .toList();
     }
 }

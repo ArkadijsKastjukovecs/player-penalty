@@ -1,7 +1,12 @@
 package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.commands.transformation.*;
+import akc.plugin.playerpenalty.commands.transformation.DurationTransformer;
+import akc.plugin.playerpenalty.commands.transformation.NumberTransformer;
+import akc.plugin.playerpenalty.commands.transformation.PlayerTransformer;
+import akc.plugin.playerpenalty.commands.transformation.SomeValueTransformer;
+import akc.plugin.playerpenalty.commands.transformation.TargetPlayerTicketNumberTransformer;
+import akc.plugin.playerpenalty.commands.transformation.VictimTicketNumberTransformer;
 
 public class TransformerManager {
 
@@ -13,7 +18,7 @@ public class TransformerManager {
     private final VictimTicketNumberTransformer victimTicketNumberTransformer;
 
     public TransformerManager(PlayerPenaltyPlugin plugin) {
-        this.playerTransformer = new PlayerTransformer();
+        this.playerTransformer = new PlayerTransformer(plugin);
         this.numberTransformer = new NumberTransformer();
         this.durationTransformer = new DurationTransformer(plugin);
         this.someValueTransformer = new SomeValueTransformer();

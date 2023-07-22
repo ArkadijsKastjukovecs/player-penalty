@@ -1,13 +1,13 @@
 package akc.plugin.playerpenalty.commands.validation;
 
-import org.bukkit.entity.Player;
+import akc.plugin.playerpenalty.domain.entities.PlayerEntity;
 
 import java.util.function.Predicate;
 
-public class PlayerValidationFunction implements Predicate<Player> {
+public class PlayerValidationFunction implements Predicate<PlayerEntity> {
 
     @Override
-    public boolean test(Player player) {
+    public boolean test(PlayerEntity player) {
         return player != null;
     }
 }

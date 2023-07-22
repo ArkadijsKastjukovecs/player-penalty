@@ -1,21 +1,13 @@
 package akc.plugin.playerpenalty.commands.validation;
 
-import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.domain.Ticket;
-import akc.plugin.playerpenalty.manager.TicketManager;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 
 import java.util.function.Predicate;
 
-public class TicketNumberValidationFunction implements Predicate<Ticket> {
-
-    private final TicketManager ticketManager;
-
-    public TicketNumberValidationFunction(PlayerPenaltyPlugin plugin) {
-        ticketManager = plugin.getTicketManager();
-    }
+public class TicketNumberValidationFunction implements Predicate<TicketEntity> {
 
     @Override
-    public boolean test(Ticket ticket) {
-        return ticket != null && !ticket.isResolved();
+    public boolean test(TicketEntity ticket) {
+        return ticket != null && ticket.getShouldBePaid();
     }
 }
