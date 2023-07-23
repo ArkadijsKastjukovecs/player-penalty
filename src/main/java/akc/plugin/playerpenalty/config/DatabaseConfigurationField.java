@@ -11,7 +11,6 @@ public enum DatabaseConfigurationField {
     DATABASE_CONNECTION_PASSWORD("", "Password used to connect to external database"),
     SHOW_AUTO_GENERATED_SQL("false", "Should be used for debugging, switch to 'true' to print auto generated sql queries during execution");
 
-
     private final String defaultValue;
     private final String comment;
 

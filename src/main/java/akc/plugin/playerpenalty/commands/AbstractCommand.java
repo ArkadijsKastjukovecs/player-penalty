@@ -60,6 +60,7 @@ public abstract class AbstractCommand implements TabExecutor {
                 .anyMatch(it -> it.isInstance(sender));
         if (!isSenderAllowed) {
             sender.sendMessage("эту комманду нельзя использовать через " + sender.getName());
+            sender.sendMessage("Допустимые отправители: " + allowedSenders.stream().map(Class::getSimpleName).collect(Collectors.toSet()));
             return true;
         }
 
@@ -76,6 +77,10 @@ public abstract class AbstractCommand implements TabExecutor {
     private boolean validateAndBuild(List<SubCommand> commands, String[] args, TicketEntity ticketBuilder, int currentArg, CommandSender sender) {
         if (commands.isEmpty()) {
             return true;
+        }
+        if (args.length <= currentArg) {
+            sender.sendMessage("Недостаточно параметров");
+            return false;
         }
 
         int finalCurrentArg = currentArg;
@@ -194,5 +199,4 @@ public abstract class AbstractCommand implements TabExecutor {
         }
         return true;
     }
-
 }

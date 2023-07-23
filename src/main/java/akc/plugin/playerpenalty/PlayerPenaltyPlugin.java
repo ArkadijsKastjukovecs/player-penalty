@@ -8,6 +8,7 @@ import akc.plugin.playerpenalty.domain.entities.PlayerEntity;
 import akc.plugin.playerpenalty.domain.entities.ScheduledEntity;
 import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.handlers.CommandHandler;
+import akc.plugin.playerpenalty.handlers.ScheduleHandler;
 import akc.plugin.playerpenalty.manager.DatabaseConfigManager;
 import akc.plugin.playerpenalty.manager.DatabaseConnectionManager;
 import akc.plugin.playerpenalty.manager.DiscordSRVManager;
@@ -16,6 +17,7 @@ import akc.plugin.playerpenalty.manager.MainConfigManager;
 import akc.plugin.playerpenalty.manager.PlayerPointsManager;
 import akc.plugin.playerpenalty.manager.TransformerManager;
 import akc.plugin.playerpenalty.manager.ValidationManager;
+import akc.plugin.playerpenalty.repository.ScheduleRepository;
 import akc.plugin.playerpenalty.repository.TicketRepository;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -36,6 +38,8 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
     private TransformerManager transformerManager;
     private DatabaseConnectionManager databaseConnectionManager;
     private TicketRepository ticketRepository;
+    private ScheduleRepository scheduleRepository;
+    private ScheduleHandler scheduleHandler;
 
     @Override
     public void onEnable() {
@@ -66,6 +70,9 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
 
         // database
         ticketRepository = new TicketRepository(this);
+        scheduleRepository = new ScheduleRepository(this);
+        scheduleHandler = new ScheduleHandler(this);
+        scheduleHandler.schedulePassedRepeatingTasks();
 
         // command handling
         this.validationManager = new ValidationManager();
@@ -74,6 +81,12 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
         // commands
         this.supportedCommands = populateCommands();
         commandHandler.registerCommands();
+    }
+
+    @Override
+    public void onDisable() {
+        super.onDisable();
+        databaseConnectionManager.closeConnection();
     }
 
     public MainConfigManager getConfigManager() {
@@ -116,6 +129,14 @@ public final class PlayerPenaltyPlugin extends JavaPlugin {
 
     public TicketRepository getTicketRepository() {
         return ticketRepository;
+    }
+
+    public ScheduleRepository getScheduleRepository() {
+        return scheduleRepository;
+    }
+
+    public ScheduleHandler getScheduleHandler() {
+        return scheduleHandler;
     }
 
     private List<AbstractCommand> populateCommands() {

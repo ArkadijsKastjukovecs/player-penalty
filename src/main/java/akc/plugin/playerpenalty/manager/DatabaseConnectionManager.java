@@ -2,7 +2,6 @@ package akc.plugin.playerpenalty.manager;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
 import akc.plugin.playerpenalty.config.DatabaseConfigurationField;
-import akc.plugin.playerpenalty.domain.entities.TicketEntity;
 import akc.plugin.playerpenalty.repository.DatabaseUrlUtil;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -42,6 +41,7 @@ public class DatabaseConnectionManager {
             prop.setProperty("hibernate.format_sql", "true");
             prop.setProperty("connection.provider_class", "com.zaxxer.hikari.hibernate.HikariConnectionProvider");
             prop.setProperty("hibernate.connection.autocommit", "true");
+            // is used to automatically generate ddl for databases
 //            prop.setProperty("hibernate.hbm2ddl.auto", "create");
 
             final var hibernateConfiguration = new Configuration()
@@ -60,13 +60,7 @@ public class DatabaseConnectionManager {
         return concreteSessionFactory.openSession();
     }
 
-    public void saveTicketToDb(TicketEntity entity) {
-        final var session = getSession();
-        session.beginTransaction();
-        final var saved = session.save(entity);
-//        final List<TicketEntity> query = session.createQuery("SELECT t from TicketEntity t", TicketEntity.class).getResultList();
-        session.getTransaction().commit();
-        LOGGER.info("saved entity");
-        session.close();
+    public void closeConnection() {
+        concreteSessionFactory.close();
     }
 }

@@ -50,7 +50,6 @@ public class DatabaseUrlUtil {
         final var databaseSchema = databaseConfigManager.getConfigValue(DatabaseConfigurationField.SCHEMA_NAME);
         return stringBuilder.append("jdbc:mysql:")
                 .append("//")
-//                .append(SEPARATOR)
                 .append(databaseIP)
                 .append(":")
                 .append(databasePort)

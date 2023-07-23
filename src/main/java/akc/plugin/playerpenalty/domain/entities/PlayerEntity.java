@@ -1,7 +1,15 @@
 package akc.plugin.playerpenalty.domain.entities;
 
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,13 +30,13 @@ public class PlayerEntity {
     @Column(name = "player_name")
     private String playerName;
 
-    @OneToMany(mappedBy = "targetPlayer", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "targetPlayer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<TicketEntity> targetTickets = new HashSet<>();
 
-    @OneToMany(mappedBy = "policePlayer", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "policePlayer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<TicketEntity> policeTickets = new HashSet<>();
 
-    @OneToMany(mappedBy = "victim", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "victim", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<TicketEntity> victimTickets = new HashSet<>();
 
     public Integer getId() {

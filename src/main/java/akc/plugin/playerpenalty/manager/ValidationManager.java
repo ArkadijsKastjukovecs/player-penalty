@@ -14,7 +14,6 @@ public class ValidationManager {
     private final SomeValueValidationFunction someValueValidationFunction;
     private final TicketNumberValidationFunction ticketNumberValidationFunction;
 
-
     public ValidationManager() {
         this.playerValidator = new PlayerValidationFunction();
         this.numberValidationFunction = new NumberValidationFunction();

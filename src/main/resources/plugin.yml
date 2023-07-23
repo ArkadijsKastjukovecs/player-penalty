@@ -16,11 +16,11 @@ commands:
 
 permissions:
   playerpenalty.createissue:
-    description: "Возможность выписать штраф человеку"
+    description: "Возможность выписывать штраф человеку"
     default: op
   playerpenalty.payfine:
-    description: "Возможность выписать штраф человеку"
+    description: "Возможность выплачивать штраф человеку"
     default: true
   playerpenalty.forgive:
-    description: "Возможность выписать штраф человеку"
+    description: "Возможность прощать штраф человеку"
     default: true

@@ -22,27 +22,12 @@ public class TicketRepository {
         this.discordSRVManager = plugin.getDiscordSRVManager();
     }
 
-    private void smth() {
-        try (final var session = databaseConnectionManager.getSession()) {
-            int id = 0;
-            final var ticket = session.createQuery("SELECT t FROM akc.plugin.playerpenalty.domain.entities.TicketEntity t", TicketEntity.class).getResultList();
-        }
-    }
-
     public List<TicketEntity> findOpenIssues(Player player) {
         try (final var session = databaseConnectionManager.getSession()) {
             return getPlayerNullsafe(player, session)
                     .getTargetTickets().stream()
                     .filter(TicketEntity::getShouldBePaid)
                     .toList();
-        }
-    }
-
-    public void addTicketToPlayer(Player player, TicketEntity ticket) {
-        try (final var session = databaseConnectionManager.getSession()) {
-            final var playerEntity = getPlayerNullsafe(player, session);
-            playerEntity.getTargetTickets().add(ticket);
-            session.update(playerEntity);
         }
     }
 
@@ -57,9 +42,6 @@ public class TicketRepository {
 
     public void saveNewTicket(TicketEntity ticket) {
         try (final var session = databaseConnectionManager.getSession()) {
-            ticket.getVictim().getVictimTickets().add(ticket);
-            ticket.getTargetPlayer().getTargetTickets().add(ticket);
-            ticket.getPolicePlayer().getPoliceTickets().add(ticket);
             Optional.ofNullable(ticket.getSchedule())
                     .ifPresent(schedule -> schedule.setSourceTicket(ticket));
             session.save(ticket);
@@ -72,9 +54,6 @@ public class TicketRepository {
     public void updateExistingTicket(TicketEntity ticket) {
         try (final var session = databaseConnectionManager.getSession()) {
             final var transaction = session.beginTransaction();
-            ticket.getVictim().getVictimTickets().add(ticket);
-            ticket.getTargetPlayer().getTargetTickets().add(ticket);
-            ticket.getPolicePlayer().getPoliceTickets().add(ticket);
             Optional.ofNullable(ticket.getSchedule())
                     .ifPresent(schedule -> schedule.setSourceTicket(ticket));
             session.update(ticket);
