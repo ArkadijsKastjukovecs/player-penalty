@@ -1,100 +1,94 @@
 package akc.plugin.playerpenalty.commands;
 
 import akc.plugin.playerpenalty.PlayerPenaltyPlugin;
-import akc.plugin.playerpenalty.domain.Ticket;
+import akc.plugin.playerpenalty.domain.ArgumentType;
 import akc.plugin.playerpenalty.domain.TicketType;
+import akc.plugin.playerpenalty.domain.entities.PlayerEntity;
+import akc.plugin.playerpenalty.domain.entities.ScheduledEntity;
+import akc.plugin.playerpenalty.domain.entities.TicketEntity;
+import akc.plugin.playerpenalty.handlers.ScheduleHandler;
 import akc.plugin.playerpenalty.manager.DiscordSRVManager;
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.function.BiFunction;
 
 public class CreateIssueCommand extends AbstractCommand {
 
-    private final int minRequiredLenght;
     private final DiscordSRVManager discordSRVManager;
+    private final ScheduleHandler scheduleHandler;
 
     public CreateIssueCommand(PlayerPenaltyPlugin plugin) {
-        super(List.of(createSubCommand()), plugin, "createIssue");
-        this.minRequiredLenght = 5;
+        super(plugin, "createIssue", List.of(Player.class));
         this.discordSRVManager = plugin.getDiscordSRVManager();
+        this.scheduleHandler = plugin.getScheduleHandler();
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    protected final boolean handleCommand(CommandSender sender, TicketEntity ticket, String[] args) {
+        var player = (Player) sender;
+        final var senderPlayer = ticketRepository.getOrCreatePlayer(player);
 
-        String[] combineStringArgs = combineStringArgs(args);
+        ticket.setPolicePlayer(senderPlayer)
+                .setTicketType(TicketType.ISSUE)
+                .setShouldBePaid(true);
 
-        if (sender instanceof Player police) {
-            if (combineStringArgs.length < minRequiredLenght) {
-                sender.sendMessage("Все параметры должны быть указаны");
-                return true;
-            }
-
-            final var invalidArgument = validateArgs(combineStringArgs);
-            if (invalidArgument != null) {
-                sender.sendMessage("не удалось распознать параметр %s".formatted(invalidArgument));
-                return true;
-            }
-            final var targetPlayer = getPlayerOrOfflinePlayer(combineStringArgs[0]);
-            final var targetPlayerDiscordId = discordSRVManager.getDiscordId(targetPlayer);
-            final var ticket = Ticket.builder()
-                    .policePlayer(police)
-                    .targetPlayer(targetPlayer)
-                    .victim(getPlayerOrOfflinePlayer(combineStringArgs[1]))
-                    .penaltyAmount(Integer.parseInt(combineStringArgs[2]))
-                    .reason(combineStringArgs[4])
-                    .deadline(getTimeFromDuration(combineStringArgs[3]))
-                    .ticketType(TicketType.ISSUE)
-                    .targetPlayerDiscordId(targetPlayerDiscordId)
-                    .build();
-
-            discordSRVManager.sendMEssageToDiscord(ticket);
-            ticketManager.addTicketToPlayer(targetPlayer, ticket);
-            police.sendMessage("Штраф успешно выписан");
-
-        } else {
-            sender.sendMessage("Только игроки могут отправлять эту комманду");
-            return true;
-        }
-        return true;
+        scheduleHandler.scheduleRepeatTask(ticket);
+        ticketRepository.saveNewTicket(ticket);
+        discordSRVManager.sendMEssageToDiscord(ticket);
+        sender.sendMessage("Штраф под номером %s на сумму %s успешно выписан".formatted(ticket.getId(), ticket.getPenaltyAmount()));
+        return false;
     }
 
-    private String validateArgs(String[] args) {
-        // TODO
-        return null;
+    @Override
+    protected List<SubCommand<?>> createSubCommands() {
+        return List.of(createSubCommand());
     }
 
-    private Player getPlayerOrOfflinePlayer(String playerName) {
-        return Optional.ofNullable(Bukkit.getPlayer(playerName))
-                .orElseGet(() -> Bukkit.getOfflinePlayer(playerName).getPlayer());
+    private BiFunction<TicketEntity, LocalDateTime, TicketEntity> addScheduleEntityToTicket() {
+        return (ticket, time) -> {
+            final var scheduledEntity = new ScheduledEntity()
+                    .setActive(true)
+                    .setDeadline(time)
+                    .setSourceTicket(ticket);
+            ticket.setSchedule(scheduledEntity);
+            return ticket;
+        };
     }
 
-    private static SubCommand createSubCommand() {
-        return SubCommand.builder()
+    private SubCommand<?> createSubCommand() {
+        return SubCommand.<PlayerEntity>builder()
                 .commandValue("Преступник")
                 .argumentType(ArgumentType.PLAYER)
-                .required(true)
-                .subCommands(List.of(SubCommand.builder()
+                .buildAppender(TicketEntity::setTargetPlayer)
+                .valueTransformer(transformerManager.getPlayerTransformer())
+                .validationFunction(validationManager.getPlayerValidator())
+                .subCommands(List.of(SubCommand.<PlayerEntity>builder()
                         .commandValue("Жертва")
                         .argumentType(ArgumentType.PLAYER)
-                        .required(true)
-                        .subCommands(List.of(SubCommand.builder()
+                        .buildAppender(TicketEntity::setVictim)
+                        .valueTransformer(transformerManager.getPlayerTransformer())
+                        .validationFunction(validationManager.getPlayerValidator())
+                        .subCommands(List.of(SubCommand.<Integer>builder()
                                 .commandValue("количество")
-                                .argumentType(ArgumentType.SOME_VALUE)
-                                .required(true)
-                                .subCommands(List.of(SubCommand.builder()
+                                .argumentType(ArgumentType.NUMBER)
+                                .buildAppender(TicketEntity::setPenaltyAmount)
+                                .validationFunction(validationManager.getNumberValidationFunction())
+                                .valueTransformer(transformerManager.getNumberTransformer())
+                                .subCommands(List.of(SubCommand.<LocalDateTime>builder()
                                         .commandValue("Длительность")
-                                        .required(true)
                                         .argumentType(ArgumentType.DURATION)
-                                        .subCommands(List.of(SubCommand.builder()
+                                        .buildAppender(addScheduleEntityToTicket())
+                                        .validationFunction(validationManager.getDurationValidationFunction())
+                                        .valueTransformer(transformerManager.getDurationTransformer())
+                                        .subCommands(List.of(SubCommand.<String>builder()
                                                 .commandValue("Причина")
                                                 .argumentType(ArgumentType.SOME_VALUE)
-                                                .required(true)
+                                                .buildAppender(TicketEntity::setReason)
+                                                .valueTransformer(transformerManager.getSomeValueTransformer())
+                                                .validationFunction(validationManager.getSomeValueValidationFunction())
                                                 .build()))
                                         .build()))
                                 .build()))

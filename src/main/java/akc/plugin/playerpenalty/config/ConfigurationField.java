@@ -1,15 +1,16 @@
 package akc.plugin.playerpenalty.config;
 
-public enum ConfigurationFields {
+public enum ConfigurationField {
     DISCORD_CHANNEL_NAME("penalties"),
     TIME_DISPLAY_FORMAT("EEE MMM dd HH:mm:ss yyyy"),
     CURRENT_ZONE_ID("Europe/Riga"),
-    LOCALE("ru");
-
+    LOCALE("ru"),
+    CONNECTION_RETRY_COUNT("5"),
+    SKIN_API("https://crafatar.com/renders/body/%s");
 
     private final String defaultValue;
 
-    ConfigurationFields(String defaultValue) {
+    ConfigurationField(String defaultValue) {
         this.defaultValue = defaultValue;
     }
 

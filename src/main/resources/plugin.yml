@@ -2,9 +2,25 @@ name: PlayerPenalty
 version: '${project.version}'
 main: akc.plugin.playerpenalty.PlayerPenaltyPlugin
 api-version: 1.19
-depend: [PlayerPoints, DiscordSRV]
+depend: [ PlayerPoints, DiscordSRV ]
 commands:
   createIssue:
     description: "Выписать штраф человеку"
+    permission: playerpenalty.createissue
   payFine:
     description: "Оплатить штраф"
+    permission: playerpenalty.payfine
+  forgive:
+    description: "Простить обидчика, закрыть штраф"
+    permission: playerpenalty.forgive
+
+permissions:
+  playerpenalty.createissue:
+    description: "Возможность выписывать штраф человеку"
+    default: op
+  playerpenalty.payfine:
+    description: "Возможность выплачивать штраф человеку"
+    default: true
+  playerpenalty.forgive:
+    description: "Возможность прощать штраф человеку"
+    default: true
